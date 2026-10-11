@@ -163,5 +163,39 @@ footer>.wrap:first-child{margin-bottom:56px}
 footer>.wrap:last-child{margin-top:auto !important}
 @media (max-width: 560px){ footer>.wrap:first-child{margin-bottom:20px} }
 
+/* hero-fit: first screen = exactly one screen (sizes from js/hero-fit.js) */
+.hero-fit .hero-screen{display:flex;flex-direction:column}
+.hero-fit section.hero{min-height:0 !important;padding:0 !important;flex:1 0 auto;display:flex;flex-direction:column}
+.hero-fit .hero-body{flex:1 0 auto;justify-content:center}
+.hero-fit .hero-marquee{flex:none}
+.hero-fit .hero-circle{width:var(--c) !important;height:var(--c)}
+.hero-fit .hero-ring{inset:calc(var(--c) * .06) !important}
+.hero-fit .hero .luna{font-size:calc(var(--c) * .2) !important;margin-bottom:calc(var(--c) * -.0767) !important}
+.hero-fit .hero .oasis{font-size:calc(var(--c) * .2833) !important;margin-top:calc(var(--c) * -.1533) !important}
+.hero-fit .hero-btns{margin:30px 0 30px !important}
+@media (max-width:820px){
+ .hero-fit .hero .luna{font-size:calc(var(--c) * .25) !important}
+ .hero-fit .hero .oasis{font-size:calc(var(--c) * .233) !important;margin-top:calc(var(--c) * -.14) !important}
+}
+@media (max-width:560px){
+ .hero-fit .hero .luna{font-size:calc(var(--c) * .216) !important;margin-bottom:calc(var(--c) * -.134) !important}
+ .hero-fit .hero .oasis{font-size:calc(var(--c) * .193) !important;margin-top:calc(var(--c) * -.137) !important}
+ .hero-fit header.wrap{padding-top:30px !important;padding-bottom:10px !important}
+ .hero-fit .hero-btns{margin:22px 0 22px !important}
+}
+.hero-fit .hero>.cap[style*="vertical-rl"]{top:50% !important;transform:translateY(-50%);white-space:nowrap}
+.hero-fit .hero>[data-promo-badge]{top:50% !important;transform:translateY(-50%)}
+@media (max-height:760px){ .hero-fit .hero>.cap[style*="vertical-rl"]{font-size:10px;letter-spacing:.24em} }
+/* short laptop screens: slimmer header so the circle gets the room */
+@media (min-width:561px) and (max-height:760px){
+ .hero-fit header.wrap{padding-top:14px !important;padding-bottom:6px !important}
+ .hero-fit header.wrap img{height:52px !important}
+ .hero-fit .hero-btns{margin:22px 0 22px !important}
+}
+@media (max-width:560px) and (max-height:600px){
+ .hero-fit header.wrap{padding-top:16px !important}
+ .hero-fit .hero-btns{margin:16px 0 16px !important}
+}
+
 /* phone: logo width (from phone export) */
 @media (max-width: 560px){ .logo-link{width:68px} }

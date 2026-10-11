@@ -49,6 +49,20 @@
         ? pct + '% off stays checking in until ' + monthDay(promo.end_date) + '.'
         : 'Rates per stay, for up to 4 guests.';
     }
+    var badge = document.querySelector('[data-promo-badge]');
+    if (badge) {
+      badge.style.visibility = promo ? 'visible' : 'hidden';
+      if (promo) {
+        var full = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        var pctEl = badge.querySelector('[data-promo-pct]');
+        if (pctEl) pctEl.textContent = pct + '%';
+        var when = badge.querySelector('[data-promo-when]');
+        var sameMonth = promo.start_date.slice(0, 7) === promo.end_date.slice(0, 7);
+        var label = sameMonth ? full[Number(promo.end_date.slice(5, 7)) - 1]
+          : full[Number(promo.start_date.slice(5, 7)) - 1] + ' &amp; ' + full[Number(promo.end_date.slice(5, 7)) - 1];
+        if (when) when.innerHTML = 'Every stay in<br><b style="color: #C9A96E; font-weight: 500">' + label + '</b>';
+      }
+    }
     var extra = document.querySelector('[data-extra]');
     if (extra && cfg.extra_hour_rate) extra.textContent = peso(cfg.extra_hour_rate);
     var dep = document.querySelector('[data-deposit]');
