@@ -102,14 +102,11 @@ button,input,select{font:inherit}
 .pkg .p{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600}
 .pkg s{font-size:13px;color:var(--muted);margin-left:6px}
 .label{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;display:block}
-.times{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:330px;overflow:auto;padding:2px}
 .chip{min-height:42px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--text);cursor:pointer;font-size:14px}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--gold);border-color:var(--ink)}
 .chip:disabled{background:transparent;color:#B9AE9F;text-decoration:line-through;cursor:default}
 .stepper{display:inline-flex;align-items:center;gap:12px}
 .stepper output{min-width:70px;text-align:center;font-size:16px}
-.outline{display:flex;flex-wrap:wrap;gap:6px 24px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:18px;font-size:14px}
-.outline b{font-weight:600}
 
 /* guests */
 .paxrow{display:flex;gap:8px;flex-wrap:wrap}
@@ -146,13 +143,25 @@ button,input,select{font:inherit}
 .row.disc span{color:var(--ok)}
 .promo-tag{display:inline-block;background:var(--gold);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:11px;font-weight:600;letter-spacing:.08em}
 
-.picked{margin-top:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.picked .label{flex-basis:100%}
-.pick{border:1px solid var(--ink);background:var(--ink);color:var(--cream);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
-.pick span{color:var(--gold);margin-left:4px}
-.stay{padding:8px 0 10px;border-bottom:1px dashed var(--line)}
-.stay .when{font-size:13px;color:var(--muted);line-height:1.6;margin-top:2px}
-.stay s{font-size:12px;color:var(--muted)}
+/* date range + typed time */
+.day.range{background:#E9DDC6;border-color:#D9C7A3}
+.day.range small{color:var(--bronze)}
+.selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:16px;background:var(--ink);color:var(--cream);border-radius:14px;padding:12px 16px;font-size:14px}
+.selbar b{color:var(--gold);font-weight:500}
+.selbar button{margin-left:auto;background:none;border:1px solid rgba(243,236,224,.4);color:var(--cream);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}
+.timebox{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.timebox input[type=time]{min-height:52px;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:600;padding:0 14px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:var(--text);min-width:170px}
+.timebox input[type=time]:focus{outline:none;border-color:var(--bronze)}
+.timebox input.bad{border-color:var(--bad);background:#FBEDEA}
+.tmsg{margin-top:10px;font-size:14px;line-height:1.5}
+.tmsg.ok{color:var(--ok)}
+.tmsg.bad{color:var(--bad)}
+.usebtn{margin-left:6px;background:var(--ink);color:var(--gold);border:0;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}
+.busy{margin-top:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:13px;color:var(--muted)}
+.busy b{color:var(--text);font-weight:600}
+.nightcard{border:1.5px solid var(--ink);background:var(--paper);border-radius:18px;padding:16px 18px}
+.nightcard .t{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;line-height:1}
+.nightcard .d{font-size:13px;color:var(--muted);margin-top:6px}
 
 /* ticket */
 .donewrap{max-width:640px;margin:0 auto 70px}
@@ -216,7 +225,8 @@ button,input,select{font:inherit}
   .pkg .t{font-size:21px}
   .pkg .d{font-size:11.5px}
   .pkg .p{font-size:24px}
-  .times{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:260px}
+  .timebox input[type=time]{font-size:20px;min-width:150px}
+  .selbar{font-size:13px}
   .chip{min-height:38px;font-size:12.5px;border-radius:10px}
   .navrow .pill{min-height:46px;padding:0 20px;font-size:11px}
   .tgrid{gap:8px}
@@ -258,13 +268,13 @@ button,input,select{font:inherit}
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var HOUR = 3600000, DAY = 86400000, PH = 8 * HOUR, MAX_DATES = 7;
+  var HOUR = 3600000, DAY = 86400000, PH = 8 * HOUR, MAX_NIGHTS = 30;
 
   var cfg = null;            // prices and rules from the Sheet
   var blocksByMonth = {};    // 'yyyy-mm' -> [{s,e}]
   var gapMs = 2 * HOUR;
   var S = {
-    step: 1, y: 0, m: 0, dates: [], time: '', pkg: '', extra: 0,
+    step: 1, y: 0, m: 0, inDay: '', outDay: '', time: '', pkg: '', extra: 0,
     pax: 2, baby: false, guests: [], email: '', agree: false,
     busy: false, error: '', ticket: null
   };
@@ -281,40 +291,69 @@ button,input,select{font:inherit}
   }
   function local(msv) { var d = new Date(msv + PH); return { day: d.toISOString().slice(0, 10), hm: d.toISOString().slice(11, 16) }; }
   function addDays(day, n) { return new Date(ms(day) + PH + n * DAY).toISOString().slice(0, 10); }
+  function daysBetween(a, b) { return Math.round((ms(b) - ms(a)) / DAY); }
   function hm12(hm) { var h = +hm.slice(0, 2), m = hm.slice(3); return ((h + 11) % 12 + 1) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM'); }
   function niceDay(day) { var d = new Date(ms(day) + PH); return DOW[d.getUTCDay()] + ', ' + MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ' ' + d.getUTCFullYear(); }
+  function shortDay(day) { return niceDay(day).replace(/ \d{4}$/, ''); }
   function niceWhen(msv) { var l = local(msv); return niceDay(l.day) + ' · ' + hm12(l.hm); }
+  function shortWhen(msv) { var l = local(msv); return shortDay(l.day) + ', ' + hm12(l.hm); }
   function rateOf(pkg) { return (cfg.rates || []).filter(function (r) { return r.package === pkg; })[0]; }
+  function nightlyPkg() { var r = cfg.rates.filter(function (x) { return x.hours >= 20; })[0]; return r ? r.package : ''; }
   function promoFor(day) {
     return (cfg.promos || []).filter(function (p) { return p.start_date <= day && day <= p.end_date; })[0] || null;
   }
-  function price(pkg, pax, day, extra) {
-    var r = rateOf(pkg); if (!r) return null;
-    var stay = pax <= 2 ? r.rate_1_2_pax : r.rate_3_4_pax;
-    var promo = promoFor(day), pct = promo ? promo.percent_off : 0;
-    var disc = Math.round(stay * pct / 100), ex = extra * cfg.extra_hour_rate;
-    return { stay: stay, promo: promo, pct: pct, disc: disc, extras: ex, deposit: cfg.deposit, total: stay - disc + ex + cfg.deposit };
-  }
   function monthKey(y, m) { return y + '-' + pad(m + 1); }
-  function blocksFor(day) {
-    var all = [];
-    [-1, 0, 1].forEach(function (k) {
-      var d = new Date(Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1 + k, 1));
-      all = all.concat(blocksByMonth[monthKey(d.getUTCFullYear(), d.getUTCMonth())] || []);
+  function step() { return cfg.checkin_step_minutes || 30; }
+
+  // The stay the guest has chosen so far.
+  function nights() {
+    if (S.outDay) return daysBetween(S.inDay, S.outDay);
+    var r = rateOf(S.pkg); return r && r.hours >= 20 ? 1 : 0;
+  }
+  function pkgNow() { return S.outDay ? nightlyPkg() : S.pkg; }
+  function stayHours() {
+    var r = rateOf(pkgNow()); if (!r) return 0;
+    var n = nights();
+    return (n ? 24 * (n - 1) + r.hours : r.hours) + S.extra;
+  }
+  function stayAt(hm) { var s0 = ms(S.inDay, hm); return { s: s0, e: s0 + stayHours() * HOUR }; }
+
+  function price() {
+    var r = rateOf(pkgNow()); if (!r) return null;
+    var base = S.pax <= 2 ? r.rate_1_2_pax : r.rate_3_4_pax, units = Math.max(1, nights());
+    var t = { base: base, units: units, nightly: nights() > 0, lines: [], stay: 0, disc: 0, promoName: '', pcts: {} };
+    for (var i = 0; i < units; i++) {
+      var day = addDays(S.inDay, i), pr = promoFor(day), pct = pr ? pr.percent_off : 0, d = Math.round(base * pct / 100);
+      t.lines.push({ day: day, pct: pct, disc: d }); t.stay += base; t.disc += d; t.pcts[pct] = 1;
+      if (pr && !t.promoName) t.promoName = pr.name;
+    }
+    var keys = Object.keys(t.pcts); t.pct = keys.length === 1 ? +keys[0] : null;
+    t.extras = S.extra * cfg.extra_hour_rate; t.deposit = cfg.deposit;
+    t.total = t.stay - t.disc + t.extras + t.deposit;
+    return t;
+  }
+
+  function allBlocks() {
+    var all = [], seen = {};
+    Object.keys(blocksByMonth).forEach(function (k) {
+      blocksByMonth[k].forEach(function (b) { var id = b.s + '-' + b.e; if (!seen[id]) { seen[id] = 1; all.push(b); } });
     });
     return all;
   }
-  function free(startMs, hours, blocks) {
-    var endMs = startMs + hours * HOUR;
-    for (var i = 0; i < blocks.length; i++) {
-      if (startMs < blocks[i].e + gapMs && blocks[i].s < endMs + gapMs) return false;
-    }
-    return true;
+  function clashes(s0, e0) {
+    return allBlocks().filter(function (b) { return s0 < b.e + gapMs && b.s < e0 + gapMs; });
   }
-  function slotsOf(day) {
-    var out = [], step = cfg.checkin_step_minutes || 30;
-    for (var t = 0; t < 1440; t += step) out.push(pad(Math.floor(t / 60)) + ':' + pad(t % 60));
-    return out;
+  function timeOk(hm) { if (!S.inDay || !hm) return false; var st = stayAt(hm); return clashes(st.s, st.e).length === 0; }
+  function slots() { var out = []; for (var t = 0; t < 1440; t += step()) out.push(pad(Math.floor(t / 60)) + ':' + pad(t % 60)); return out; }
+  function nextOk(fromHm) {
+    var list = slots(), i0 = Math.max(0, list.indexOf(fromHm));
+    for (var i = i0; i < list.length; i++) if (timeOk(list[i])) return list[i];
+    return '';
+  }
+  function prevOk(fromHm) {
+    var list = slots(), i0 = list.indexOf(fromHm);
+    for (var i = i0 - 1; i >= 0; i--) if (timeOk(list[i])) return list[i];
+    return '';
   }
   function minDay() { return addDays(todayYmd(), cfg.min_notice_days || 0); }
   function maxDay() {
@@ -323,34 +362,12 @@ button,input,select{font:inherit}
   }
   function dayStatus(day) {
     if (day < minDay() || day > maxDay()) return 'off';
-    var bl = blocksFor(day), s0 = ms(day), s1 = s0 + DAY;
+    var s0 = ms(day), s1 = s0 + DAY, bl = allBlocks();
     var touched = bl.some(function (b) { return b.s < s1 + gapMs && b.e + gapMs > s0; });
     if (!touched) return 'free';
     var minHours = Math.min.apply(null, cfg.rates.map(function (r) { return r.hours; }));
-    var any = slotsOf(day).some(function (hm) { return free(ms(day, hm), minHours, bl); });
+    var any = slots().some(function (hm) { var a = ms(day, hm); return !bl.some(function (b) { return a < b.e + gapMs && b.s < a + minHours * HOUR + gapMs; }); });
     return any ? 'part' : 'full';
-  }
-  function pkgHours() { var r = rateOf(S.pkg); return r ? r.hours : 0; }
-  // One stay per selected date, all at the same check-in time; extra hours go on the last stay.
-  function staysAt(hm) {
-    return S.dates.map(function (d, i) {
-      var ex = i === S.dates.length - 1 ? S.extra : 0, s0 = ms(d, hm);
-      return { day: d, s: s0, e: s0 + (pkgHours() + ex) * HOUR, hours: pkgHours() + ex, extra: ex };
-    });
-  }
-  function timeOk(hm) {
-    var st = staysAt(hm);
-    for (var i = 0; i < st.length; i++) {
-      if (!free(st[i].s, st[i].hours, blocksFor(st[i].day))) return false;
-      if (i && st[i].s < st[i - 1].e + gapMs) return false;
-    }
-    return st.length > 0;
-  }
-  function totalPrice(pkg, pax, dates, extra) {
-    var t = { lines: [], stay: 0, disc: 0, extras: extra * cfg.extra_hour_rate, deposit: cfg.deposit };
-    dates.forEach(function (d) { var p = price(pkg, pax, d, 0); t.lines.push({ day: d, p: p }); t.stay += p.stay; t.disc += p.disc; });
-    t.total = t.stay - t.disc + t.extras + t.deposit;
-    return t;
   }
 
   // ---------- backend ----------
@@ -367,6 +384,7 @@ button,input,select{font:inherit}
   }
   var loadingMonth = {};
   function loadMonth(y, m, force) {
+    if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; }
     var key = monthKey(y, m);
     if ((blocksByMonth[key] && !force) || loadingMonth[key]) return Promise.resolve();
     loadingMonth[key] = true;
@@ -375,12 +393,21 @@ button,input,select{font:inherit}
       gapMs = d.gap_ms; blocksByMonth[key] = d.blocks || [];
     }).finally(function () { loadingMonth[key] = false; });
   }
+  function loadSpan() { // make sure every month the stay touches is loaded
+    if (!S.inDay) return Promise.resolve();
+    var a = S.inDay, b = S.outDay || addDays(S.inDay, 2), jobs = [], seen = {};
+    for (var d = addDays(a, -1); d <= addDays(b, 1); d = addDays(d, 1)) {
+      var k = d.slice(0, 7); if (seen[k]) continue; seen[k] = 1;
+      jobs.push(loadMonth(+k.slice(0, 4), +k.slice(5, 7) - 1));
+    }
+    return Promise.all(jobs);
+  }
 
   // ---------- rendering ----------
   var STEP_NAMES = [['Date', 'Date'], ['Time & package', 'Time'], ['Guests', 'Guests'], ['Details', 'Details']];
   function stepOk(n) {
-    if (n === 1) return S.dates.length > 0;
-    if (n === 2) return !!(S.pkg && S.time && timeOk(S.time));
+    if (n === 1) return !!S.inDay;
+    if (n === 2) return !!(pkgNow() && S.time && timeOk(S.time));
     if (n === 3) return S.guests.length === S.pax && S.guests.every(function (g) { return g.name.trim().length >= 2 && g.file && g.file.data; });
     if (n === 4) return /^[a-z0-9._%+-]+@gmail\.com$/i.test(S.email.trim()) && S.agree;
     return false;
@@ -418,10 +445,12 @@ button,input,select{font:inherit}
     for (var i = 0; i < first; i++) cells += '<div class="day empty"></div>';
     for (var d = 1; d <= days; d++) {
       var day = ymd(y, m, d), st = loaded ? dayStatus(day) : (day < minDay() || day > maxDay() ? 'off' : 'free');
-      var sel = S.dates.indexOf(day) !== -1;
-      var cls = 'day' + (st === 'off' ? ' off' : st === 'full' ? ' full' : st === 'part' ? ' part' : '') + (sel ? ' sel' : '');
-      var label = sel ? 'Check-in' : st === 'full' ? 'Booked' : st === 'part' ? 'Partial' : '';
-      var dis = st === 'off' || st === 'full' || !loaded;
+      var isIn = S.inDay === day, isOut = S.outDay === day, inRange = S.outDay && day > S.inDay && day < S.outDay;
+      var cls = 'day' + (st === 'off' ? ' off' : st === 'full' ? ' full' : st === 'part' ? ' part' : '') + (isIn || isOut ? ' sel' : inRange ? ' range' : '');
+      var label = isIn ? 'Check-in' : isOut ? 'Check-out' : inRange ? 'Staying' : st === 'full' ? 'Booked' : st === 'part' ? 'Partial' : '';
+      // a check-out day only needs its morning free, so allow picking a "full" day as check-out
+      var canOut = S.inDay && !S.outDay && day > S.inDay;
+      var dis = !loaded || st === 'off' || (st === 'full' && !canOut && !isIn && !isOut);
       cells += '<button type="button" class="' + cls + '" data-day="' + day + '"' + (dis ? ' disabled' : '') +
         ' aria-label="' + niceDay(day) + (label ? ', ' + label : '') + '"><b>' + d + '</b>' + (label ? '<small>' + label + '</small>' : '') + '</button>';
     }
@@ -429,51 +458,81 @@ button,input,select{font:inherit}
     var mx = maxDay(), canNext = ymd(y, m, 1) < mx.slice(0, 8) + '01';
     var promo = promoForMonth(y, m), banner = '';
     if (promo) {
-      var r10 = rateOf('10H');
+      var r10 = cfg.rates[0];
       banner = '<div class="promo"><b>' + promo.percent_off + '% OFF</b><span>Promo rates for ' + MONTHS[m] + ' stays' +
         (r10 ? ' · 2 pax from <em>' + peso(r10.rate_1_2_pax * (100 - promo.percent_off) / 100) + '</em>, 4 pax from <em>' + peso(r10.rate_3_4_pax * (100 - promo.percent_off) / 100) + '</em>' : '') + '</span></div>';
     }
-    return '<h2>When are you coming?</h2><p class="sub">Tap one or more dates (up to ' + MAX_DATES + '). Each date is one stay. Tap a date again to remove it.</p>' +
+    var sel = '';
+    if (S.inDay) {
+      var n = S.outDay ? daysBetween(S.inDay, S.outDay) : 0;
+      sel = '<div class="selbar"><span>Check-in <b>' + shortDay(S.inDay) + '</b></span>' +
+        (S.outDay ? '<span>Check-out <b>' + shortDay(S.outDay) + '</b></span><span><b>' + n + (n > 1 ? ' nights' : ' night') + '</b></span>'
+                  : '<span style="opacity:.75">Staying more than one night? Tap your check-out date.</span>') +
+        '<button type="button" data-act="clear">Clear</button></div>';
+    }
+    return '<h2>When are you coming?</h2><p class="sub">Tap your check-in date. Staying longer? Tap your check-out date too, and we\'ll count the nights.</p>' +
       '<div class="calnav"><button type="button" class="round" data-act="prev" aria-label="Previous month"' + (canPrev ? '' : ' disabled') + '>‹</button>' +
       '<h3>' + MONTHS[m] + ' ' + y + '</h3><button type="button" class="round" data-act="nextm" aria-label="Next month"' + (canNext ? '' : ' disabled') + '>›</button></div>' +
       banner +
       '<div class="dow">' + DOW.map(function (x) { return '<div>' + x.toUpperCase() + '</div>'; }).join('') + '</div>' +
       '<div class="grid" role="group" aria-label="' + MONTHS[m] + ' ' + y + '">' + cells + '</div>' +
-      (loaded ? '' : '<p class="note">Checking which dates are free…</p>') +
-      (S.dates.length ? '<div class="picked"><span class="label" style="margin:0 0 8px">Your dates (' + S.dates.length + ')</span>' +
-        S.dates.map(function (d) { return '<button type="button" class="pick" data-day="' + d + '" aria-label="Remove ' + niceDay(d) + '">' + niceDay(d).replace(/ \d{4}$/, '') + ' <span aria-hidden="true">×</span></button>'; }).join('') +
-        '</div>' : '') +
-      '<div class="legend"><span><i style="background:#FBF7EE"></i>Available</span><span><i style="background:#EAD9B5;border-color:#EAD9B5"></i>Partly booked</span><span><i style="background:#D3C7B5;border-color:#D3C7B5"></i>Fully booked</span><span><i style="background:#12100E;border-color:#12100E"></i>Your check-in</span></div>';
+      (loaded ? '' : '<p class="note">Checking which dates are free…</p>') + sel +
+      '<div class="legend"><span><i style="background:#FBF7EE"></i>Available</span><span><i style="background:#EAD9B5;border-color:#EAD9B5"></i>Partly booked</span><span><i style="background:#D3C7B5;border-color:#D3C7B5"></i>Fully booked</span><span><i style="background:#12100E;border-color:#12100E"></i>Your dates</span></div>';
   }
   function promoForMonth(y, m) {
     var a = ymd(y, m, 1), b = ymd(y, m, new Date(Date.UTC(y, m + 1, 0)).getUTCDate());
     return (cfg.promos || []).filter(function (p) { return p.start_date <= b && a <= p.end_date; })[0] || null;
   }
 
+  function busyNote() {
+    if (!S.inDay) return '';
+    var from = ms(S.inDay) - DAY, to = ms(S.outDay || addDays(S.inDay, 1)) + 2 * DAY;
+    var list = allBlocks().filter(function (b) { return b.e > from && b.s < to; }).sort(function (a, b) { return a.s - b.s; });
+    if (!list.length) return '<div class="busy">No other bookings around your dates. Any time works.</div>';
+    return '<div class="busy"><b>Already booked:</b><br>' + list.map(function (b) {
+      return shortWhen(b.s) + ' → ' + shortWhen(b.e) + (gapMs ? ' <span style="opacity:.8">(+' + (gapMs / HOUR) + ' hr cleaning)</span>' : '');
+    }).join('<br>') + '</div>';
+  }
+
+  function timeMsg() {
+    if (!S.time) return '<div class="tmsg">Type a time or use the arrows (on the hour or half hour).</div>';
+    var mm = +S.time.slice(3);
+    if (mm % step()) return '<div class="tmsg bad">Please use :00 or :30.</div>';
+    var st = stayAt(S.time);
+    if (timeOk(S.time)) return '<div class="tmsg ok">✓ Free. Check-out ' + niceWhen(st.e) + '.</div>';
+    var c = clashes(st.s, st.e)[0], after = nextOk(S.time), before = prevOk(S.time);
+    var msg = '<div class="tmsg bad">That time overlaps another guest (booked ' + shortWhen(c.s) + ' → ' + shortWhen(c.e) + (gapMs ? ', plus ' + (gapMs / HOUR) + ' hr cleaning' : '') + ').';
+    if (after) msg += '<br>Next free check-in: <b>' + hm12(after) + '</b><button type="button" class="usebtn" data-usetime="' + after + '">Use ' + hm12(after) + '</button>';
+    if (before) msg += '<br>Or earlier: <b>' + hm12(before) + '</b><button type="button" class="usebtn" data-usetime="' + before + '">Use ' + hm12(before) + '</button>';
+    if (!after && !before) msg += '<br>No check-in time works for this stay. Please pick other dates or a shorter stay.';
+    return msg + '</div>';
+  }
+
   function stepTime() {
-    var pkgs = cfg.rates.map(function (r) {
-      var p = price(r.package, S.pax, S.dates[0], 0);
-      return '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" aria-pressed="' + (S.pkg === r.package) + '">' +
-        '<div class="t">' + r.hours + ' hours</div><div class="d">' + (r.hours >= 20 ? 'Overnight stay' : 'Day stay') + ' · ' + (S.pax <= 2 ? '1–2' : '3–4') + ' guests</div>' +
-        '<div class="p">' + peso(p.stay - p.disc) + (p.disc ? '<s>' + peso(p.stay) + '</s>' : '') + '</div></button>';
-    }).join('');
-    var times = '';
-    if (S.pkg) {
-      times = '<span class="label">Check-in time' + (S.dates.length > 1 ? ' (same for all ' + S.dates.length + ' dates)' : ' on ' + niceDay(S.dates[0])) + '</span><div class="times" role="group" aria-label="Check-in times">' +
-        slotsOf(S.dates[0]).map(function (hm) {
-          var ok = timeOk(hm);
-          return '<button type="button" class="chip" data-time="' + hm + '" aria-pressed="' + (S.time === hm) + '"' + (ok ? '' : ' disabled aria-label="' + hm12(hm) + ', taken"') + '>' + hm12(hm) + '</button>';
-        }).join('') + '</div>';
+    var n = S.outDay ? daysBetween(S.inDay, S.outDay) : 0, choose;
+    if (S.outDay) {
+      var r = rateOf(nightlyPkg()), p = price();
+      choose = '<div class="nightcard"><div class="t">' + n + ' nights</div><div class="d">' + shortDay(S.inDay) + ' → ' + shortDay(S.outDay) +
+        ' · ' + n + ' × ' + peso(p.base) + ' (' + r.hours + '-hour rate, ' + (S.pax <= 2 ? '1–2' : '3–4') + ' guests)' + (p.disc ? ' · ' + (p.pct ? p.pct + '% off' : 'promo on some nights') : '') + '</div></div>';
+    } else {
+      choose = '<div class="pkgs">' + cfg.rates.map(function (r) {
+        var base = S.pax <= 2 ? r.rate_1_2_pax : r.rate_3_4_pax, pr = promoFor(S.inDay), pct = pr ? pr.percent_off : 0;
+        return '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" aria-pressed="' + (S.pkg === r.package) + '">' +
+          '<div class="t">' + r.hours + ' hours</div><div class="d">' + (r.hours >= 20 ? 'Overnight · 1 night' : 'Day stay') + ' · ' + (S.pax <= 2 ? '1–2' : '3–4') + ' guests</div>' +
+          '<div class="p">' + peso(base * (100 - pct) / 100) + (pct ? '<s>' + peso(base) + '</s>' : '') + '</div></button>';
+      }).join('') + '</div>';
     }
-    var extra = S.pkg ? '<span class="label">Extra hours (' + peso(cfg.extra_hour_rate) + ' each, not discounted' + (S.dates.length > 1 ? ', added to your last stay' : '') + ')</span>' +
+    var extra = '<span class="label">Extra hours (' + peso(cfg.extra_hour_rate) + ' each, not discounted)</span>' +
       '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
       '<output aria-live="polite">' + S.extra + ' hr' + (S.extra === 1 ? '' : 's') + '</output>' +
-      '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < 6 ? '' : ' disabled') + '>+</button></div>' : '';
-    var out = (S.pkg && S.time) ? '<div class="outline" style="flex-direction:column">' + staysAt(S.time).map(function (st, i) {
-      return '<span>' + (S.dates.length > 1 ? '<b>Stay ' + (i + 1) + ':</b> ' : '') + 'In <b>' + niceWhen(st.s) + '</b> → Out <b>' + niceWhen(st.e) + '</b></span>';
-    }).join('') + '</div>' : '';
-    return '<h2>Time &amp; package</h2><p class="sub">Choose 10 or 22 hours, then your check-in time. Prices shown for ' + (S.pax <= 2 ? '1–2' : '3–4') + ' guests; you can change the number of guests in the next step.</p>' +
-      '<div class="pkgs">' + pkgs + '</div>' + extra + times + out;
+      '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < 12 ? '' : ' disabled') + '>+</button></div>';
+    var time = '<label class="label" for="tin">Check-in time on ' + niceDay(S.inDay) + '</label>' +
+      '<div class="timebox"><button type="button" class="round" data-act="tdown" aria-label="30 minutes earlier">−</button>' +
+      '<input type="time" id="tin" step="' + (step() * 60) + '" value="' + esc(S.time) + '"' + (S.time && !timeOk(S.time) ? ' class="bad"' : '') + '>' +
+      '<button type="button" class="round" data-act="tup" aria-label="30 minutes later">+</button></div>' +
+      '<div id="tmsg">' + timeMsg() + '</div>' + busyNote();
+    return '<h2>Time &amp; package</h2><p class="sub">' + (S.outDay ? 'Each night is charged the overnight rate. Pick your check-in time.' : 'Choose 10 or 22 hours, then your check-in time.') + ' Prices shown for ' + (S.pax <= 2 ? '1–2' : '3–4') + ' guests; you can change the number of guests next.</p>' +
+      choose + time + extra;
   }
 
   function stepGuests() {
@@ -512,35 +571,39 @@ button,input,select{font:inherit}
       '<label class="check"><input type="checkbox" data-act="agree"' + (S.agree ? ' checked' : '') + '>I agree to the house rules and confirm the guest details are correct.</label>';
   }
 
-  function summary() {
-    var t = totalPrice(S.pkg, S.pax, S.dates, S.extra), st = staysAt(S.time), p = t;
-    return '<div class="sum"><div class="head"><img src="assets/img/logo.png" alt=""><div><div>Your stay at</div><div>Luna\'s Oasis</div></div></div><div class="body">' +
-      st.map(function (x, i) {
-        var lp = t.lines[i].p;
-        return '<div class="stay"><div class="row" style="border:0;padding-bottom:0"><span><b>' + (st.length > 1 ? 'Stay ' + (i + 1) : 'Your stay') + '</b> · ' + pkgHours() + ' hrs (' + (S.pax <= 2 ? '2' : '4') + ' pax)</span><span>' + peso(lp.stay - lp.disc) + (lp.disc ? ' <s>' + peso(lp.stay) + '</s>' : '') + '</span></div>' +
-          '<div class="when">In ' + niceWhen(x.s) + '<br>Out ' + niceWhen(x.e) + (lp.disc ? '<br><span class="promo-tag">' + lp.pct + '% OFF</span> ' + esc(lp.promo.name) : '') + '</div></div>';
-      }).join('') +
-      '<div class="row"><span>Guests</span><span>' + S.pax + (S.baby ? ' + baby' : '') + '</span></div>' +
-      (S.extra ? '<div class="row"><span>Extra hours (' + S.extra + ' × ' + peso(cfg.extra_hour_rate) + ')</span><span>' + peso(p.extras) + '</span></div>' : '') +
-      '<div class="row"><span>Security deposit (refundable)</span><span>' + peso(p.deposit) + '</span></div>' +
-      '<div class="row total"><span>Total</span><span>' + peso(p.total) + '</span></div></div></div>';
+  // price rows shared by the summary and the ticket
+  function priceRows(o) {
+    var rows = '<div class="row"><span>' + (o.nightly ? o.units + (o.units > 1 ? ' nights' : ' night') + ' × ' + peso(o.base) : o.hoursLabel + ' stay') +
+      ' <span style="opacity:.7">(' + (o.pax <= 2 ? '2' : '4') + ' pax)</span></span><span>' + peso(o.stay) + '</span></div>';
+    if (o.disc) rows += '<div class="row disc"><span><span class="promo-tag">' + (o.pct ? o.pct + '% OFF' : 'PROMO') + '</span> ' + esc(o.promoName || '') + '</span><span>−' + peso(o.disc) + '</span></div>';
+    if (o.extras) rows += '<div class="row"><span>Extra hours (' + o.extraHours + ' × ' + peso(cfg ? cfg.extra_hour_rate : o.extras / o.extraHours) + ')</span><span>' + peso(o.extras) + '</span></div>';
+    rows += '<div class="row"><span>Security deposit (refundable)</span><span>' + peso(o.deposit) + '</span></div>';
+    rows += '<div class="row total"><span>Total</span><span>' + peso(o.total) + '</span></div>';
+    return rows;
   }
 
+  function summary() {
+    var p = price(), st = stayAt(S.time);
+    return '<div class="sum"><div class="head"><img src="assets/img/logo.png" alt=""><div><div>Your stay at</div><div>Luna\'s Oasis</div></div></div><div class="body">' +
+      '<div class="row"><span>Check-in</span><span>' + niceWhen(st.s) + '</span></div>' +
+      '<div class="row"><span>Check-out</span><span>' + niceWhen(st.e) + '</span></div>' +
+      '<div class="row"><span>Guests</span><span>' + S.pax + (S.baby ? ' + baby' : '') + '</span></div>' +
+      priceRows({ nightly: p.nightly, units: p.units, base: p.base, hoursLabel: rateOf(pkgNow()).hours + '-hour', pax: S.pax, stay: p.stay, disc: p.disc, pct: p.pct, promoName: p.promoName,
+        extras: p.extras, extraHours: S.extra, deposit: p.deposit, total: p.total }) + '</div></div>';
+  }
+
+  function tMs(v) { return ms(v.slice(0, 10), v.slice(11)); }
   function renderTicket() {
-    var t = S.ticket, p = t.price;
-    function iso(v) { return ms(v.slice(0, 10), v.slice(11)); }
+    var t = S.ticket, p = t.price, inMs = tMs(t.check_in), outMs = tMs(t.check_out);
     app.innerHTML = '<div class="donewrap">' +
       '<div class="ticket" id="ticket"><div class="th"><img src="assets/img/logo.png" alt="Luna\'s Oasis"><div><div class="k">Booking ticket</div><div class="ref">' + esc(t.ref) + '</div></div></div>' +
       '<div class="tb"><div class="tgrid">' +
+      '<div class="tbox"><div>Check-in</div><div>' + niceWhen(inMs) + '</div></div>' +
+      '<div class="tbox"><div>Check-out</div><div>' + niceWhen(outMs) + '</div></div>' +
       '<div class="tbox"><div>Main guest</div><div>' + esc(t.guest_name) + '</div></div>' +
-      '<div class="tbox"><div>Guests</div><div>' + t.pax + (t.baby ? ' + baby' : '') + ' · ' + t.stays.length + (t.stays.length > 1 ? ' stays' : ' stay') + '</div></div></div>' +
-      t.stays.map(function (x, i) {
-        return '<div class="stay"><div class="row" style="border:0;padding-bottom:0"><span><b>' + (t.stays.length > 1 ? 'Stay ' + (i + 1) : 'Your stay') + '</b> · ' + x.hours + ' hrs</span><span>' + peso(x.stay_rate - x.discount) + (x.discount ? ' <s>' + peso(x.stay_rate) + '</s>' : '') + '</span></div>' +
-          '<div class="when">In ' + niceWhen(iso(x.check_in)) + '<br>Out ' + niceWhen(iso(x.check_out)) + (x.discount ? '<br><span class="promo-tag">' + x.promo_pct + '% OFF</span> ' + esc(x.promo_name) : '') + '</div></div>';
-      }).join('') +
-      (p.extras_total ? '<div class="row"><span>Extra hours</span><span>' + peso(p.extras_total) + '</span></div>' : '') +
-      '<div class="row"><span>Security deposit (refundable)</span><span>' + peso(p.deposit) + '</span></div>' +
-      '<div class="row total"><span>Total</span><span>' + peso(p.total) + '</span></div>' +
+      '<div class="tbox"><div>Guests</div><div>' + t.pax + (t.baby ? ' + baby' : '') + (t.nights ? ' · ' + t.nights + (t.nights > 1 ? ' nights' : ' night') : '') + '</div></div></div>' +
+      priceRows({ nightly: t.nights > 0, units: t.nights || 1, base: p.unit_rate, hoursLabel: (t.hours - p.extra_hours) + '-hour', pax: t.pax, stay: p.stay_rate, disc: p.discount, pct: p.promo_pct, promoName: p.promo_name,
+        extras: p.extras_total, extraHours: p.extra_hours, deposit: p.deposit, total: p.total }) +
       '<div class="status">⏳ <span><b>Not confirmed yet.</b> Send this ticket to us on Messenger. We\'ll reply with GCash / bank details.</span></div>' +
       '</div></div>' +
       '<div class="thanks" style="margin:26px 0 0"><h2>Your ticket is ready</h2><p>We also sent it to ' + esc(t.guest_email) + '.</p></div>' +
@@ -553,11 +616,12 @@ button,input,select{font:inherit}
 
   // ---------- ticket image ----------
   function ticketPng() {
-    var t = S.ticket, p = t.price, W = 1080, rowH0 = t.stays.length > 3 ? 74 : 104;
-    var H = 530 + t.stays.length * rowH0 + 20 + (p.extras_total ? 62 : 0) + 62 + 80 + 120 + 230, c = document.createElement('canvas');
+    var t = S.ticket, p = t.price, W = 1080;
+    var H = 1500 - (p.discount ? 0 : 62) - (p.extras_total ? 0 : 62), c = document.createElement('canvas');
     c.width = W; c.height = H;
     var g = c.getContext('2d');
     var serif = '"Cormorant Garamond", Georgia, serif', sans = 'Jost, Arial, sans-serif';
+    var inMs = tMs(t.check_in), outMs = tMs(t.check_out);
     function rr(x, y, w, h, r, fill) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); g.fillStyle = fill; g.fill(); }
     g.fillStyle = '#12100E'; g.fillRect(0, 0, W, H);
     rr(60, 60, W - 120, H - 120, 40, '#FBF7EE');
@@ -576,27 +640,22 @@ button,input,select{font:inherit}
           g.fillStyle = '#6B6157'; g.font = '500 20px ' + sans; g.fillText(label.toUpperCase(), x + 26, yy + 42);
           g.fillStyle = '#2A231D'; g.font = '600 30px ' + sans; g.fillText(val, x + 26, yy + 88);
         }
+        var li = local(inMs), lo = local(outMs);
+        box(110, y, 'Check-in', shortDay(li.day)); box(570, y, 'Check-out', shortDay(lo.day));
+        y += 140;
+        box(110, y, 'Time in', hm12(li.hm)); box(570, y, 'Time out', hm12(lo.hm));
+        y += 140;
         box(110, y, 'Main guest', t.guest_name.length > 20 ? t.guest_name.slice(0, 19) + '…' : t.guest_name);
-        box(570, y, 'Guests', t.pax + (t.baby ? ' + baby' : '') + ' pax · ' + t.stays.length + (t.stays.length > 1 ? ' stays' : ' stay'));
-        y += 170;
-        var many = t.stays.length > 3, rowH = rowH0;
-        t.stays.forEach(function (x, i) {
-          var a1 = local(ms(x.check_in.slice(0, 10), x.check_in.slice(11))), b1 = local(ms(x.check_out.slice(0, 10), x.check_out.slice(11)));
-          g.textAlign = 'left'; g.fillStyle = '#2A231D'; g.font = '600 ' + (many ? 24 : 28) + 'px ' + sans;
-          g.fillText((t.stays.length > 1 ? 'Stay ' + (i + 1) + ' · ' : '') + x.hours + ' hrs', 110, y);
-          g.textAlign = 'right'; g.fillText(peso(x.stay_rate - x.discount), W - 110, y);
-          g.textAlign = 'left'; g.fillStyle = '#6B6157'; g.font = '400 ' + (many ? 20 : 24) + 'px ' + sans;
-          g.fillText(niceDay(a1.day).replace(/ \d{4}$/, '') + ' ' + hm12(a1.hm) + '  →  ' + niceDay(b1.day).replace(/ \d{4}$/, '') + ' ' + hm12(b1.hm) + (x.discount ? '   (' + x.promo_pct + '% off)' : ''), 110, y + (many ? 30 : 38));
-          g.fillStyle = '#E2D6C2'; g.fillRect(110, y + (many ? 46 : 60), W - 220, 2);
-          y += rowH;
-        });
-        y += 20;
+        box(570, y, 'Guests', t.pax + (t.baby ? ' + baby' : '') + ' pax' + (t.nights ? ' · ' + t.nights + (t.nights > 1 ? ' nights' : ' night') : ''));
+        y += 180;
         function line(a, b, bold, color) {
           g.fillStyle = color || '#2A231D'; g.font = (bold ? '600 ' : '400 ') + (bold ? 34 : 28) + 'px ' + sans;
           g.textAlign = 'left'; g.fillText(a, 110, y); g.textAlign = 'right'; g.fillText(b, W - 110, y); g.textAlign = 'left';
           if (!bold) { g.fillStyle = '#E2D6C2'; g.fillRect(110, y + 22, W - 220, 2); }
           y += bold ? 70 : 62;
         }
+        line((t.nights ? t.nights + (t.nights > 1 ? ' nights' : ' night') + ' × ' + peso(p.unit_rate) : (t.hours - p.extra_hours) + '-hour stay') + ' (' + (t.pax <= 2 ? '2' : '4') + ' pax)', peso(p.stay_rate));
+        if (p.discount) line((p.promo_pct ? p.promo_pct + '% OFF · ' : 'Promo · ') + p.promo_name, '−' + peso(p.discount), false, '#2F5A47');
         if (p.extras_total) line('Extra hours (' + p.extra_hours + ')', peso(p.extras_total));
         line('Security deposit (refundable)', peso(p.deposit));
         y += 10; line('TOTAL', peso(p.total), true);
@@ -658,32 +717,66 @@ button,input,select{font:inherit}
   }
 
   // ---------- events ----------
+  function pickDay(day) {
+    if (!S.inDay || S.outDay || day < S.inDay) { S.inDay = day; S.outDay = ''; }
+    else if (day === S.inDay) { S.inDay = ''; S.outDay = ''; }
+    else if (daysBetween(S.inDay, day) > MAX_NIGHTS) S.error = 'For stays longer than ' + MAX_NIGHTS + ' nights, please message us.';
+    else {
+      var keepOut = S.outDay, keepExtra = S.extra;
+      S.outDay = day; S.extra = 0;
+      var fits = loadedFor(S.inDay, day) ? nextOk('00:00') : 'unknown';
+      S.extra = keepExtra;
+      if (!fits) { S.outDay = keepOut; S.error = 'Some nights between ' + shortDay(S.inDay) + ' and ' + shortDay(day) + ' are already booked. Please choose other dates.'; }
+    }
+    if (S.outDay) S.pkg = nightlyPkg();
+  }
+  function loadedFor(a, b) {
+    for (var d = a; d <= b; d = addDays(d, 1)) if (!blocksByMonth[d.slice(0, 7)]) return false;
+    return true;
+  }
+  function setTime(v) {
+    S.time = v || '';
+    var box = document.getElementById('tmsg'), inp = document.getElementById('tin');
+    if (box) box.innerHTML = timeMsg();
+    if (inp) { inp.classList.toggle('bad', !!S.time && !timeOk(S.time)); if (inp.value !== S.time) inp.value = S.time; }
+    refreshNav();
+  }
+  function shiftTime(dir) {
+    var list = slots(), cur = S.time ? list.indexOf(S.time.slice(0, 5)) : -1;
+    if (cur === -1) { var base = S.time ? (+S.time.slice(0, 2) * 60 + +S.time.slice(3)) : 14 * 60; cur = Math.floor(base / step()) - (dir > 0 ? 1 : 0); }
+    var n = Math.min(list.length - 1, Math.max(0, cur + dir));
+    setTime(list[n]);
+  }
+
   app.addEventListener('click', function (e) {
     var el = e.target.closest('button, [data-act]'); if (!el || el.disabled) return;
     var d = el.dataset;
     S.error = '';
     if (d.go) { S.step = +d.go; render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); return; }
-    if (d.day) {
-      var k = S.dates.indexOf(d.day);
-      if (k !== -1) S.dates.splice(k, 1);
-      else if (S.dates.length >= MAX_DATES) S.error = 'You can pick up to ' + MAX_DATES + ' dates per booking.';
-      else { S.dates.push(d.day); S.dates.sort(); }
-      if (S.time && !timeOk(S.time)) S.time = '';
-      render(); return;
-    }
-    if (d.pkg) { S.pkg = d.pkg; if (S.time && !timeOk(S.time)) S.time = ''; render(); return; }
-    if (d.time) { S.time = d.time; render(); return; }
+    if (d.day) { pickDay(d.day); render(); loadSpan().then(render); return; }
+    if (d.pkg) { S.pkg = d.pkg; render(); return; }
+    if (d.usetime) { setTime(d.usetime); return; }
     if (d.pax) { S.pax = +d.pax; syncGuests(); render(); return; }
     switch (d.act) {
       case 'prev': S.m--; if (S.m < 0) { S.m = 11; S.y--; } monthChanged(); break;
       case 'nextm': S.m++; if (S.m > 11) { S.m = 0; S.y++; } monthChanged(); break;
+      case 'clear': S.inDay = ''; S.outDay = ''; S.time = ''; render(); break;
+      case 'tdown': shiftTime(-1); break;
+      case 'tup': shiftTime(1); break;
       case 'exminus': S.extra = Math.max(0, S.extra - 1); render(); break;
-      case 'explus': S.extra = Math.min(6, S.extra + 1); if (S.time && !timeOk(S.time)) S.time = ''; render(); break;
-      case 'next': if (stepOk(S.step)) { S.step++; if (S.step === 3) syncGuests(); render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); } break;
+      case 'explus': S.extra = Math.min(12, S.extra + 1); render(); break;
+      case 'next':
+        if (stepOk(S.step)) {
+          S.step++;
+          if (S.step === 2 && !S.time) { var def = timeOk('14:00') ? '14:00' : nextOk('14:00') || nextOk('00:00'); S.time = def || ''; }
+          if (S.step === 3) syncGuests();
+          render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' });
+        }
+        break;
       case 'back': S.step--; render(); break;
       case 'submit': submit(); break;
       case 'save': saveTicket(); break;
-      case 'again': S.ticket = null; S.step = 1; S.dates = []; S.time = ''; S.agree = false; S.guests = []; blocksByMonth = {}; monthChanged(); break;
+      case 'again': S.ticket = null; S.step = 1; S.inDay = ''; S.outDay = ''; S.time = ''; S.agree = false; S.guests = []; blocksByMonth = {}; monthChanged(); break;
     }
   });
   app.addEventListener('change', function (e) {
@@ -691,9 +784,11 @@ button,input,select{font:inherit}
     if (d.act === 'baby') { S.baby = el.checked; return; }
     if (d.act === 'agree') { S.agree = el.checked; render(); return; }
     if (d.gfile != null) readId(+d.gfile, el.files && el.files[0]);
+    if (el.id === 'tin') setTime(el.value);
   });
   app.addEventListener('input', function (e) {
     var el = e.target;
+    if (el.id === 'tin') { setTime(el.value); return; }
     if (el.dataset.gname != null) { S.guests[+el.dataset.gname].name = el.value; refreshNav(); }
     if (el.id === 'em') {
       S.email = el.value; refreshNav();
@@ -709,7 +804,8 @@ button,input,select{font:inherit}
 
   function monthChanged() {
     render();
-    loadMonth(S.y, S.m).then(render).catch(function () { S.error = 'Could not load the calendar. Please check your connection and try again.'; render(); });
+    Promise.all([loadMonth(S.y, S.m), loadMonth(S.y, S.m + 1)]).then(render)
+      .catch(function () { S.error = 'Could not load the calendar. Please check your connection and try again.'; render(); });
   }
 
   function submit() {
@@ -718,8 +814,8 @@ button,input,select{font:inherit}
     S.busy = true; S.error = ''; render();
     postJSON({
       action: 'createBooking', website: hp ? hp.value : '',
-      guest_email: S.email.trim(), pax: S.pax, baby: S.baby, check_ins: S.dates.map(function (d) { return d + 'T' + S.time; }),
-      package: S.pkg, extra_hours: S.extra, agree: S.agree,
+      guest_email: S.email.trim(), pax: S.pax, baby: S.baby, check_in: S.inDay + 'T' + S.time,
+      package: pkgNow(), nights: nights(), extra_hours: S.extra, agree: S.agree,
       guests: S.guests.map(function (g) { return { full_name: g.name.trim(), id: { name: 'id', mime: g.file.mime, data: g.file.data } }; })
     }).then(function (t) {
       S.busy = false; S.ticket = t; render();
@@ -727,9 +823,8 @@ button,input,select{font:inherit}
       S.busy = false;
       S.error = (err && err.message && err.message !== 'Failed to fetch') ? err.message : 'We could not send your booking. Please check your connection and try again.';
       if (/taken/i.test(S.error)) {
-        S.step = 2; S.time = '';
-        var mk = {}; S.dates.forEach(function (d) { mk[d.slice(0, 7)] = 1; });
-        Promise.all(Object.keys(mk).map(function (k) { return loadMonth(+k.slice(0, 4), +k.slice(5, 7) - 1, true); })).then(render);
+        S.step = 2; blocksByMonth = {};
+        loadSpan().then(function () { return loadMonth(S.y, S.m); }).then(render);
       }
       render();
     });
