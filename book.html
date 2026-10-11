@@ -4,32 +4,703 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Book your stay — Luna's Oasis</title>
-<meta name="robots" content="noindex">
+<meta name="description" content="Book your staycation at Luna's Oasis, Quezon City. Pick a date, time and package, add your guests, and get your booking ticket.">
 <meta name="theme-color" content="#12100E">
-<link rel="icon" type="image/png" href="./assets/img/logo.png">
+<link rel="icon" type="image/png" href="assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&amp;family=Jost:wght@300;400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&amp;family=Jost:wght@300;400;500;600&amp;family=Pinyon+Script&amp;display=swap" rel="stylesheet">
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#12100E;color:#F3ECE0;font-family:Jost,sans-serif;text-align:center;padding:32px 16px;box-sizing:border-box}
-main{max-width:560px}
-img{height:72px;width:auto}
-.cap{font-size:12px;letter-spacing:.38em;text-transform:uppercase;color:#C9A96E;margin:28px 0 14px}
-h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(34px,7vw,56px);line-height:1.08;margin:0}
-h1 em{color:#C9A96E}
-p{color:#B9AE9F;line-height:1.7;font-size:16px;margin:18px 0 30px}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 28px;font-size:12px;letter-spacing:.28em;text-transform:uppercase;text-decoration:none;background:#C9A96E;color:#12100E;margin:6px}
-.btn.ghost{background:none;border:1px solid #C9A96E;color:#C9A96E}
-.btn:focus-visible{outline:2px solid #F3ECE0;outline-offset:3px}
+:root{
+  --ink:#12100E; --ink2:#1B1714; --cream:#F3ECE0; --paper:#FBF7EE; --line:#E2D6C2;
+  --gold:#C9A96E; --bronze:#7A5A2E; --text:#2A231D; --muted:#6B6157; --soft:#B9AE9F;
+  --busy:#D3C7B5; --part:#EAD9B5; --bad:#9A3B2E; --ok:#2F5A47;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream);font-family:Jost,sans-serif;font-size:16px;line-height:1.5}
+a{color:var(--gold)}
+button,input,select{font:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 32px}
+.cap{font-size:12px;letter-spacing:.32em;text-transform:uppercase}
+.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* top bar */
+.top{border-bottom:1px solid rgba(201,169,110,.25)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:76px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--cream)}
+.brand img{height:46px;width:auto}
+.brand span{font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.24em;text-transform:uppercase}
+.back{color:var(--cream);text-decoration:none;font-size:15px}
+.back:hover{color:var(--gold)}
+
+/* hero */
+.hero{position:relative;text-align:center;padding:38px 16px 34px;overflow:hidden}
+.moon{position:relative;width:96px;height:96px;margin:0 auto 6px}
+.moon:before,.moon:after{content:"";position:absolute;inset:0;border-radius:50%}
+.moon:before{background:var(--gold);box-shadow:0 0 70px rgba(201,169,110,.35)}
+.moon:after{background:var(--ink);transform:translate(24px,-14px)}
+.hero .luna{font-family:'Pinyon Script',cursive;color:var(--gold);font-size:56px;line-height:1.1}
+.hero h1{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(40px,6vw,70px);line-height:1;margin:0}
+.hero p{color:var(--soft);margin:12px 0 0;font-size:17px}
+
+/* steps */
+.steps{display:flex;gap:6px;background:var(--cream);border:1px solid var(--line);border-radius:999px;padding:7px;margin:0 0 22px}
+.steps button{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;border:0;border-radius:999px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;letter-spacing:.22em;text-transform:uppercase;padding:0 8px}
+.steps button .n{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#E6DCCB;font-size:11px;letter-spacing:0;flex:none}
+.steps button[aria-current="step"]{background:var(--ink);color:var(--gold)}
+.steps button[aria-current="step"] .n{background:var(--cream);color:var(--ink)}
+.steps button.done .n{background:var(--gold);color:var(--ink)}
+.steps button:disabled{cursor:default;opacity:.55}
+.steps .short{display:none}
+
+/* layout */
+.layout{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;padding-bottom:70px}
+.main{flex:999 1 560px;min-width:0}
+.aside{flex:1 1 340px;min-width:0}
+.card{background:var(--cream);color:var(--text);border:1px solid var(--line);border-radius:26px;padding:30px 32px}
+.card h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:34px;line-height:1.1;margin:0}
+.card .sub{color:var(--muted);margin:6px 0 22px;font-size:15px}
+.navrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 28px;border-radius:999px;border:0;cursor:pointer;font-size:12px;letter-spacing:.24em;text-transform:uppercase;text-decoration:none}
+.pill.gold{background:var(--gold);color:var(--ink)}
+.pill.gold:disabled{background:#3A332C;color:#8A7E6E;cursor:not-allowed}
+.pill.ghost{background:transparent;color:var(--cream);border:1px solid rgba(243,236,224,.45)}
+.pill.dark{background:var(--ink);color:var(--gold)}
+.pill:focus-visible,.steps button:focus-visible,.day:focus-visible,.chip:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.err{background:#F6E3DF;color:var(--bad);border-radius:12px;padding:10px 14px;font-size:14px;margin-top:14px}
+.note{font-size:13px;color:var(--muted);margin-top:12px}
+
+/* calendar */
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calnav h3{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:28px;margin:0}
+.round{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--text);cursor:pointer;font-size:18px}
+.round:disabled{opacity:.35;cursor:default}
+.promo{display:flex;align-items:center;gap:14px;background:var(--ink2);color:var(--cream);border:1px solid var(--gold);border-radius:14px;padding:10px 16px;margin-bottom:14px}
+.promo b{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold);font-weight:600;white-space:nowrap}
+.promo span{font-size:14px}
+.promo em{color:var(--gold);font-style:normal}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.dow div{text-align:center;font-size:11px;letter-spacing:.2em;color:var(--muted);padding:4px 0}
+.day{min-height:62px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px}
+.day b{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;line-height:1}
+.day small{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.day.empty{visibility:hidden}
+.day.off{background:transparent;border-color:transparent;color:#B5AA9A;cursor:default}
+.day.part{background:var(--part);border-color:var(--part)}
+.day.full{background:var(--busy);border-color:var(--busy);cursor:default;color:#6F6458}
+.day.sel{background:var(--ink);border-color:var(--ink);color:var(--cream)}
+.day.sel small{color:var(--gold)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:6px;border:1px solid var(--line)}
+
+/* packages / times */
+.pkgs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pkg{text-align:left;border:1.5px solid var(--line);background:var(--paper);border-radius:18px;padding:16px 18px;cursor:pointer;color:var(--text)}
+.pkg[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1.5px var(--ink) inset}
+.pkg .t{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;line-height:1}
+.pkg .d{font-size:13px;color:var(--muted);margin:4px 0 10px}
+.pkg .p{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600}
+.pkg s{font-size:13px;color:var(--muted);margin-left:6px}
+.label{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;display:block}
+.times{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:330px;overflow:auto;padding:2px}
+.chip{min-height:42px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--text);cursor:pointer;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--gold);border-color:var(--ink)}
+.chip:disabled{background:transparent;color:#B9AE9F;text-decoration:line-through;cursor:default}
+.stepper{display:inline-flex;align-items:center;gap:12px}
+.stepper output{min-width:70px;text-align:center;font-size:16px}
+.outline{display:flex;flex-wrap:wrap;gap:6px 24px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:18px;font-size:14px}
+.outline b{font-weight:600}
+
+/* guests */
+.paxrow{display:flex;gap:8px;flex-wrap:wrap}
+.paxrow .chip{min-width:58px;font-size:16px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--bronze);flex:none;margin-top:1px}
+.guest{border:1px solid var(--line);background:var(--paper);border-radius:16px;padding:14px 16px;margin-top:12px}
+.guest .gh{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--bronze);margin-bottom:8px}
+.inp{width:100%;min-height:46px;border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:0 14px;color:var(--text);font-size:16px}
+.inp:focus{outline:none;border-color:var(--bronze)}
+.file{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.file label{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border-radius:999px;border:1.5px solid var(--text);cursor:pointer;font-size:13px}
+.file input{position:absolute;left:-9999px}
+.file .fs{font-size:13px;color:var(--muted)}
+.file .fs.ok{color:var(--ok)}
+.file img{width:44px;height:30px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+
+/* details */
+.rules{margin:10px 0 0;padding:0;list-style:none;font-size:14px}
+.rules li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.rules li:before{content:"✦";color:var(--gold)}
+
+/* summary */
+.sum{background:var(--paper);color:var(--text);border-radius:26px;overflow:hidden;border:1px solid var(--line)}
+.sum .head{background:var(--ink);color:var(--cream);padding:18px 22px;display:flex;align-items:center;gap:12px}
+.sum .head img{height:40px}
+.sum .head div div:first-child{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
+.sum .head div div:last-child{font-family:'Cormorant Garamond',serif;font-size:22px}
+.sum .body{padding:16px 22px 20px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.row span:last-child{text-align:right}
+.row.total{border-bottom:0;font-size:16px;font-weight:600;padding-top:12px}
+.row.total span:last-child{font-family:'Cormorant Garamond',serif;font-size:30px}
+.row.disc span{color:var(--ok)}
+.promo-tag{display:inline-block;background:var(--gold);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:11px;font-weight:600;letter-spacing:.08em}
+
+/* ticket */
+.donewrap{max-width:640px;margin:0 auto 70px}
+.ticket{background:var(--paper);color:var(--text);border-radius:26px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.45)}
+.ticket .th{background:var(--ink);padding:22px 26px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--gold)}
+.ticket .th img{height:52px}
+.ticket .th .k{font-size:10px;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;text-align:right}
+.ticket .th .ref{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--cream);text-align:right}
+.ticket .tb{padding:20px 26px 24px}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.tbox{background:#F1E8DA;border-radius:14px;padding:12px 14px}
+.tbox div:first-child{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.tbox div:last-child{font-weight:600;margin-top:2px}
+.status{display:flex;gap:10px;background:#FFF4D6;border:1px solid #EAD9B5;border-radius:14px;padding:12px 14px;font-size:14px;margin-top:14px}
+.after{margin:18px 0 0;padding:0 0 0 18px;color:var(--soft);font-size:15px}
+.after li{margin:6px 0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.thanks{text-align:center;margin:0 0 22px}
+.thanks h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(32px,5vw,48px);margin:0}
+.thanks p{color:var(--soft);margin:6px 0 0}
+
+.loading{padding:60px 16px;text-align:center;color:var(--soft)}
+.spin{width:28px;height:28px;border-radius:50%;border:2px solid rgba(201,169,110,.3);border-top-color:var(--gold);animation:sp 1s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* phones */
+@media (max-width: 760px){
+  .wrap{padding:0 14px}
+  .top .wrap{min-height:58px}
+  .brand img{height:34px}
+  .brand span{font-size:14px;letter-spacing:.2em}
+  .back{font-size:13px}
+  .hero{padding:20px 14px 18px}
+  .moon{width:60px;height:60px}
+  .moon:after{transform:translate(15px,-9px)}
+  .hero .luna{font-size:38px}
+  .hero h1{font-size:34px}
+  .hero p{font-size:14px}
+  .steps{border-radius:16px;padding:5px;gap:4px}
+  .steps button{flex-direction:column;gap:3px;min-height:52px;font-size:10px;letter-spacing:.1em;border-radius:12px}
+  .steps .long{display:none}
+  .steps .short{display:inline}
+  .card{border-radius:20px;padding:18px 14px}
+  .card h2{font-size:26px}
+  .card .sub{font-size:13.5px;margin-bottom:14px}
+  .calnav h3{font-size:22px}
+  .round{width:38px;height:38px}
+  .promo{padding:8px 12px;gap:10px}
+  .promo b{font-size:20px}
+  .promo span{font-size:12px}
+  .dow,.grid{gap:4px}
+  .dow div{font-size:9px;letter-spacing:.08em}
+  .day{min-height:46px;border-radius:10px;padding:2px}
+  .day b{font-size:17px}
+  .day small{display:none}
+  .day.part:after,.day.full:after{content:"";width:5px;height:5px;border-radius:50%;background:var(--bronze);margin-top:2px}
+  .day.full:after{background:#6F6458}
+  .legend{font-size:11.5px;gap:6px 12px}
+  .pkgs{gap:8px}
+  .pkg{padding:12px}
+  .pkg .t{font-size:21px}
+  .pkg .d{font-size:11.5px}
+  .pkg .p{font-size:24px}
+  .times{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:260px}
+  .chip{min-height:38px;font-size:12.5px;border-radius:10px}
+  .navrow .pill{min-height:46px;padding:0 20px;font-size:11px}
+  .tgrid{gap:8px}
+  .ticket .th{padding:16px 18px}
+  .ticket .th img{height:40px}
+  .ticket .th .ref{font-size:24px}
+  .ticket .tb{padding:16px 18px 20px}
+  .layout{gap:14px;padding-bottom:40px}
+  .aside{order:-1}
+}
 </style>
 </head>
 <body>
-<main>
-<a href="./"><img src="./assets/img/logo.png" alt="Luna's Oasis home"></a>
-<div class="cap">Reservations</div>
-<h1>Online booking <em>opens soon</em></h1>
-<p>Our booking calendar is almost ready. For now, message us on Messenger and we'll check your dates right away.</p>
-<a class="btn" href="https://www.facebook.com/p/Lunas-Oasis-The-Residences-Commonwealth-Staycation-61593221320978/" target="_blank" rel="noopener">Message us</a><a class="btn ghost" href="./">Back to home</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/img/logo.png" alt=""><span>Luna's Oasis</span></a>
+    <a class="back" href="./">← Back to home</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="moon" aria-hidden="true"></div>
+  <div class="luna">Luna's</div>
+  <h1>Book your stay</h1>
+  <p>Just 4 easy steps. We'll send your booking to your Gmail.</p>
+</section>
+
+<main class="wrap" id="app">
+  <div class="loading"><div class="spin"></div>Loading the calendar…</div>
 </main>
+
+<script src="js/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = window.LUNA_CONFIG && window.LUNA_CONFIG.API_URL;
+  var app = document.getElementById('app');
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var HOUR = 3600000, DAY = 86400000, PH = 8 * HOUR;
+
+  var cfg = null;            // prices and rules from the Sheet
+  var blocksByMonth = {};    // 'yyyy-mm' -> [{s,e}]
+  var gapMs = 2 * HOUR;
+  var S = {
+    step: 1, y: 0, m: 0, date: '', time: '', pkg: '', extra: 0,
+    pax: 2, baby: false, guests: [], email: '', agree: false,
+    busy: false, error: '', ticket: null
+  };
+
+  // ---------- helpers ----------
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function peso(n) { return '₱' + Math.round(n).toLocaleString('en-PH'); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
+  function todayYmd() { return new Date(Date.now() + PH).toISOString().slice(0, 10); }
+  function ms(day, hm) {      // Manila local -> epoch ms
+    var p = day.split('-'), t = (hm || '00:00').split(':');
+    return Date.UTC(+p[0], +p[1] - 1, +p[2], +t[0], +t[1]) - PH;
+  }
+  function local(msv) { var d = new Date(msv + PH); return { day: d.toISOString().slice(0, 10), hm: d.toISOString().slice(11, 16) }; }
+  function addDays(day, n) { return new Date(ms(day) + PH + n * DAY).toISOString().slice(0, 10); }
+  function hm12(hm) { var h = +hm.slice(0, 2), m = hm.slice(3); return ((h + 11) % 12 + 1) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM'); }
+  function niceDay(day) { var d = new Date(ms(day) + PH); return DOW[d.getUTCDay()] + ', ' + MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ' ' + d.getUTCFullYear(); }
+  function niceWhen(msv) { var l = local(msv); return niceDay(l.day) + ' · ' + hm12(l.hm); }
+  function rateOf(pkg) { return (cfg.rates || []).filter(function (r) { return r.package === pkg; })[0]; }
+  function promoFor(day) {
+    return (cfg.promos || []).filter(function (p) { return p.start_date <= day && day <= p.end_date; })[0] || null;
+  }
+  function price(pkg, pax, day, extra) {
+    var r = rateOf(pkg); if (!r) return null;
+    var stay = pax <= 2 ? r.rate_1_2_pax : r.rate_3_4_pax;
+    var promo = promoFor(day), pct = promo ? promo.percent_off : 0;
+    var disc = Math.round(stay * pct / 100), ex = extra * cfg.extra_hour_rate;
+    return { stay: stay, promo: promo, pct: pct, disc: disc, extras: ex, deposit: cfg.deposit, total: stay - disc + ex + cfg.deposit };
+  }
+  function monthKey(y, m) { return y + '-' + pad(m + 1); }
+  function blocksFor(day) {
+    var all = [];
+    [-1, 0, 1].forEach(function (k) {
+      var d = new Date(Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1 + k, 1));
+      all = all.concat(blocksByMonth[monthKey(d.getUTCFullYear(), d.getUTCMonth())] || []);
+    });
+    return all;
+  }
+  function free(startMs, hours, blocks) {
+    var endMs = startMs + hours * HOUR;
+    for (var i = 0; i < blocks.length; i++) {
+      if (startMs < blocks[i].e + gapMs && blocks[i].s < endMs + gapMs) return false;
+    }
+    return true;
+  }
+  function slotsOf(day) {
+    var out = [], step = cfg.checkin_step_minutes || 30;
+    for (var t = 0; t < 1440; t += step) out.push(pad(Math.floor(t / 60)) + ':' + pad(t % 60));
+    return out;
+  }
+  function minDay() { return addDays(todayYmd(), cfg.min_notice_days || 0); }
+  function maxDay() {
+    var t = todayYmd(), d = new Date(Date.UTC(+t.slice(0, 4), +t.slice(5, 7) - 1 + (cfg.max_months_ahead || 12), +t.slice(8, 10)));
+    return d.toISOString().slice(0, 10);
+  }
+  function dayStatus(day) {
+    if (day < minDay() || day > maxDay()) return 'off';
+    var bl = blocksFor(day), s0 = ms(day), s1 = s0 + DAY;
+    var touched = bl.some(function (b) { return b.s < s1 + gapMs && b.e + gapMs > s0; });
+    if (!touched) return 'free';
+    var minHours = Math.min.apply(null, cfg.rates.map(function (r) { return r.hours; }));
+    var any = slotsOf(day).some(function (hm) { return free(ms(day, hm), minHours, bl); });
+    return any ? 'part' : 'full';
+  }
+  function hoursNow() { var r = rateOf(S.pkg); return r ? r.hours + S.extra : 0; }
+  function timeOk(hm) { return free(ms(S.date, hm), hoursNow(), blocksFor(S.date)); }
+
+  // ---------- backend ----------
+  function getJSON(params) {
+    var q = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+    return fetch(API + '?' + q).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) throw new Error(j.error || 'Something went wrong.'); return j.data;
+    });
+  }
+  function postJSON(body) {
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (!j.ok) throw new Error(j.error || 'Something went wrong.'); return j.data; });
+  }
+  var loadingMonth = {};
+  function loadMonth(y, m, force) {
+    var key = monthKey(y, m);
+    if ((blocksByMonth[key] && !force) || loadingMonth[key]) return Promise.resolve();
+    loadingMonth[key] = true;
+    var from = ymd(y, m, 1), to = ymd(y, m, new Date(Date.UTC(y, m + 1, 0)).getUTCDate());
+    return getJSON({ action: 'getAvailability', from: from, to: to }).then(function (d) {
+      gapMs = d.gap_ms; blocksByMonth[key] = d.blocks || [];
+    }).finally(function () { loadingMonth[key] = false; });
+  }
+
+  // ---------- rendering ----------
+  var STEP_NAMES = [['Date', 'Date'], ['Time & package', 'Time'], ['Guests', 'Guests'], ['Details', 'Details']];
+  function stepOk(n) {
+    if (n === 1) return !!S.date;
+    if (n === 2) return !!(S.pkg && S.time && timeOk(S.time));
+    if (n === 3) return S.guests.length === S.pax && S.guests.every(function (g) { return g.name.trim().length >= 2 && g.file && g.file.data; });
+    if (n === 4) return /^[a-z0-9._%+-]+@gmail\.com$/i.test(S.email.trim()) && S.agree;
+    return false;
+  }
+  function canGo(n) { for (var i = 1; i < n; i++) if (!stepOk(i)) return false; return true; }
+
+  function render() {
+    if (S.ticket) { renderTicket(); return; }
+    var steps = STEP_NAMES.map(function (n, i) {
+      var k = i + 1, cur = S.step === k, done = k < S.step;
+      return '<button type="button" data-go="' + k + '"' + (cur ? ' aria-current="step"' : '') + (done ? ' class="done"' : '') +
+        (canGo(k) ? '' : ' disabled') + '><span class="n">' + (done ? '✓' : k) + '</span><span class="long">' + n[0] + '</span><span class="short">' + n[1] + '</span></button>';
+    }).join('');
+    var body = [stepDate, stepTime, stepGuests, stepDetails][S.step - 1]();
+    var aside = S.step === 4 ? '<aside class="aside">' + summary() + '</aside>' : '';
+    app.innerHTML = '<nav class="steps" aria-label="Booking steps">' + steps + '</nav>' +
+      '<div class="layout"><div class="main"><div class="card">' + body +
+      (S.error ? '<div class="err" role="alert">' + esc(S.error) + '</div>' : '') +
+      '</div>' + navRow() + '</div>' + aside + '</div>';
+  }
+
+  function navRow() {
+    var back = S.step > 1 ? '<button type="button" class="pill ghost" data-act="back">← Back</button>' : '<span></span>';
+    var next = S.step < 4
+      ? '<button type="button" class="pill gold" data-act="next"' + (stepOk(S.step) ? '' : ' disabled') + '>Continue →</button>'
+      : '<button type="button" class="pill gold" data-act="submit"' + (stepOk(4) && !S.busy ? '' : ' disabled') + '>' + (S.busy ? 'Sending…' : 'Send booking request') + '</button>';
+    return '<div class="navrow">' + back + next + '</div>';
+  }
+
+  function stepDate() {
+    var y = S.y, m = S.m, key = monthKey(y, m);
+    var first = new Date(Date.UTC(y, m, 1)).getUTCDay(), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    var loaded = !!blocksByMonth[key];
+    var cells = '';
+    for (var i = 0; i < first; i++) cells += '<div class="day empty"></div>';
+    for (var d = 1; d <= days; d++) {
+      var day = ymd(y, m, d), st = loaded ? dayStatus(day) : (day < minDay() || day > maxDay() ? 'off' : 'free');
+      var sel = S.date === day;
+      var cls = 'day' + (st === 'off' ? ' off' : st === 'full' ? ' full' : st === 'part' ? ' part' : '') + (sel ? ' sel' : '');
+      var label = sel ? 'Check-in' : st === 'full' ? 'Booked' : st === 'part' ? 'Partial' : '';
+      var dis = st === 'off' || st === 'full' || !loaded;
+      cells += '<button type="button" class="' + cls + '" data-day="' + day + '"' + (dis ? ' disabled' : '') +
+        ' aria-label="' + niceDay(day) + (label ? ', ' + label : '') + '"><b>' + d + '</b>' + (label ? '<small>' + label + '</small>' : '') + '</button>';
+    }
+    var t = todayYmd(), canPrev = (y > +t.slice(0, 4)) || (y === +t.slice(0, 4) && m > +t.slice(5, 7) - 1);
+    var mx = maxDay(), canNext = ymd(y, m, 1) < mx.slice(0, 8) + '01';
+    var promo = promoForMonth(y, m), banner = '';
+    if (promo) {
+      var r10 = rateOf('10H');
+      banner = '<div class="promo"><b>' + promo.percent_off + '% OFF</b><span>Promo rates for ' + MONTHS[m] + ' stays' +
+        (r10 ? ' · 2 pax from <em>' + peso(r10.rate_1_2_pax * (100 - promo.percent_off) / 100) + '</em>, 4 pax from <em>' + peso(r10.rate_3_4_pax * (100 - promo.percent_off) / 100) + '</em>' : '') + '</span></div>';
+    }
+    return '<h2>When are you coming?</h2><p class="sub">Pick your check-in date. Partly booked days still have free hours.</p>' +
+      '<div class="calnav"><button type="button" class="round" data-act="prev" aria-label="Previous month"' + (canPrev ? '' : ' disabled') + '>‹</button>' +
+      '<h3>' + MONTHS[m] + ' ' + y + '</h3><button type="button" class="round" data-act="nextm" aria-label="Next month"' + (canNext ? '' : ' disabled') + '>›</button></div>' +
+      banner +
+      '<div class="dow">' + DOW.map(function (x) { return '<div>' + x.toUpperCase() + '</div>'; }).join('') + '</div>' +
+      '<div class="grid" role="group" aria-label="' + MONTHS[m] + ' ' + y + '">' + cells + '</div>' +
+      (loaded ? '' : '<p class="note">Checking which dates are free…</p>') +
+      '<div class="legend"><span><i style="background:#FBF7EE"></i>Available</span><span><i style="background:#EAD9B5;border-color:#EAD9B5"></i>Partly booked</span><span><i style="background:#D3C7B5;border-color:#D3C7B5"></i>Fully booked</span><span><i style="background:#12100E;border-color:#12100E"></i>Your check-in</span></div>';
+  }
+  function promoForMonth(y, m) {
+    var a = ymd(y, m, 1), b = ymd(y, m, new Date(Date.UTC(y, m + 1, 0)).getUTCDate());
+    return (cfg.promos || []).filter(function (p) { return p.start_date <= b && a <= p.end_date; })[0] || null;
+  }
+
+  function stepTime() {
+    var pkgs = cfg.rates.map(function (r) {
+      var p = price(r.package, S.pax, S.date, 0);
+      return '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" aria-pressed="' + (S.pkg === r.package) + '">' +
+        '<div class="t">' + r.hours + ' hours</div><div class="d">' + (r.hours >= 20 ? 'Overnight stay' : 'Day stay') + ' · ' + (S.pax <= 2 ? '1–2' : '3–4') + ' guests</div>' +
+        '<div class="p">' + peso(p.stay - p.disc) + (p.disc ? '<s>' + peso(p.stay) + '</s>' : '') + '</div></button>';
+    }).join('');
+    var times = '';
+    if (S.pkg) {
+      times = '<span class="label">Check-in time on ' + niceDay(S.date) + '</span><div class="times" role="group" aria-label="Check-in times">' +
+        slotsOf(S.date).map(function (hm) {
+          var ok = timeOk(hm);
+          return '<button type="button" class="chip" data-time="' + hm + '" aria-pressed="' + (S.time === hm) + '"' + (ok ? '' : ' disabled aria-label="' + hm12(hm) + ', taken"') + '>' + hm12(hm) + '</button>';
+        }).join('') + '</div>';
+    }
+    var extra = S.pkg ? '<span class="label">Extra hours (' + peso(cfg.extra_hour_rate) + ' each, not discounted)</span>' +
+      '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
+      '<output aria-live="polite">' + S.extra + ' hr' + (S.extra === 1 ? '' : 's') + '</output>' +
+      '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < 6 ? '' : ' disabled') + '>+</button></div>' : '';
+    var out = (S.pkg && S.time) ? '<div class="outline"><span>Check-in <b>' + niceWhen(ms(S.date, S.time)) + '</b></span><span>Check-out <b>' + niceWhen(ms(S.date, S.time) + hoursNow() * HOUR) + '</b></span></div>' : '';
+    return '<h2>Time &amp; package</h2><p class="sub">Choose 10 or 22 hours, then your check-in time. Prices shown for ' + (S.pax <= 2 ? '1–2' : '3–4') + ' guests; you can change the number of guests in the next step.</p>' +
+      '<div class="pkgs">' + pkgs + '</div>' + extra + times + out;
+  }
+
+  function stepGuests() {
+    var max = cfg.max_pax || 4, pax = '';
+    for (var i = 1; i <= max; i++) pax += '<button type="button" class="chip" data-pax="' + i + '" aria-pressed="' + (S.pax === i) + '">' + i + '</button>';
+    var list = S.guests.map(function (g, i) {
+      var st = g.file ? (g.file.error ? '<span class="fs">' + esc(g.file.error) + '</span>' : g.file.busy ? '<span class="fs">Preparing…</span>' :
+        (g.file.thumb ? '<img src="' + g.file.thumb + '" alt="">' : '') + '<span class="fs ok">✓ ' + esc(g.file.label) + '</span>') : '<span class="fs">No ID yet</span>';
+      return '<div class="guest"><div class="gh">Guest ' + (i + 1) + (i === 0 ? ' · main guest' : '') + '</div>' +
+        '<label class="sr" for="gn' + i + '">Full name of guest ' + (i + 1) + '</label>' +
+        '<input class="inp" id="gn' + i + '" data-gname="' + i + '" autocomplete="' + (i === 0 ? 'name' : 'off') + '" placeholder="Full name (as on ID)" value="' + esc(g.name) + '">' +
+        '<div class="file"><label for="gf' + i + '">' + (g.file && g.file.data ? 'Change ID' : 'Upload ID') + '</label>' +
+        '<input type="file" id="gf' + i + '" data-gfile="' + i + '" accept="image/*,application/pdf">' + st + '</div></div>';
+    }).join('');
+    var babyOk = (cfg.max_babies || 0) > 0;
+    return '<h2>Who is coming?</h2><p class="sub">Maximum ' + max + ' guests, no extra guests. Kids above 2 years old count as 1 guest. 1–2 guests pay the 2-pax rate; 3–4 guests pay the 4-pax rate.</p>' +
+      '<div class="paxrow" role="group" aria-label="Number of guests">' + pax + '</div>' +
+      (babyOk ? '<label class="check"><input type="checkbox" data-act="baby"' + (S.baby ? ' checked' : '') + '>Bringing a baby aged 2 or under (free, not counted)</label>' : '') +
+      '<span class="label">Names and valid IDs</span>' + list +
+      '<p class="note">Every guest needs a valid ID (photo or PDF). IDs are kept private and deleted after your stay.</p>';
+  }
+
+  function stepDetails() {
+    return '<h2>Your details</h2><p class="sub">We send your booking and Guest Access Form (GAF) to this Gmail.</p>' +
+      '<label class="label" for="em" style="margin-top:0">Gmail address</label>' +
+      '<input class="inp" id="em" type="email" inputmode="email" autocomplete="email" placeholder="yourname@gmail.com" value="' + esc(S.email) + '">' +
+      '<p class="note" id="emhint" style="color:#9A3B2E"' + (S.email && !/^[a-z0-9._%+-]+@gmail\.com$/i.test(S.email.trim()) ? '' : ' hidden') + '>Please use a Gmail address (ends with @gmail.com).</p>' +
+      '<input type="text" id="website" tabindex="-1" autocomplete="off" class="sr" aria-hidden="true">' +
+      '<span class="label">House rules</span><ul class="rules">' +
+      '<li>Maximum of ' + (cfg.max_pax || 4) + ' pax only. No extra guests or visitors.</li>' +
+      '<li>Every guest needs a valid ID.</li>' +
+      '<li>No smoking or vaping inside the unit.</li>' +
+      '<li>' + peso(cfg.deposit) + ' security deposit, returned after check-out if everything is okay.</li>' +
+      '<li>Payment by GCash or bank transfer only. No cash.</li>' +
+      '<li>Please check in and check out on time.</li>' +
+      '<li>You can cancel and get a refund. Message us on Messenger as early as you can.</li></ul>' +
+      '<label class="check"><input type="checkbox" data-act="agree"' + (S.agree ? ' checked' : '') + '>I agree to the house rules and confirm the guest details are correct.</label>';
+  }
+
+  function summary() {
+    var p = price(S.pkg, S.pax, S.date, S.extra), inMs = ms(S.date, S.time), outMs = inMs + hoursNow() * HOUR;
+    return '<div class="sum"><div class="head"><img src="assets/img/logo.png" alt=""><div><div>Your stay at</div><div>Luna\'s Oasis</div></div></div><div class="body">' +
+      '<div class="row"><span>Check-in</span><span>' + niceWhen(inMs) + '</span></div>' +
+      '<div class="row"><span>Check-out</span><span>' + niceWhen(outMs) + '</span></div>' +
+      '<div class="row"><span>Guests</span><span>' + S.pax + (S.baby ? ' + baby' : '') + '</span></div>' +
+      '<div class="row"><span>' + rateOf(S.pkg).hours + '-hour stay (' + (S.pax <= 2 ? '2' : '4') + ' pax)</span><span>' + peso(p.stay) + '</span></div>' +
+      (p.disc ? '<div class="row disc"><span><span class="promo-tag">' + p.pct + '% OFF</span> ' + esc(p.promo.name) + '</span><span>−' + peso(p.disc) + '</span></div>' : '') +
+      (S.extra ? '<div class="row"><span>Extra hours (' + S.extra + ' × ' + peso(cfg.extra_hour_rate) + ')</span><span>' + peso(p.extras) + '</span></div>' : '') +
+      '<div class="row"><span>Security deposit (refundable)</span><span>' + peso(p.deposit) + '</span></div>' +
+      '<div class="row total"><span>Total</span><span>' + peso(p.total) + '</span></div></div></div>';
+  }
+
+  function renderTicket() {
+    var t = S.ticket, p = t.price, inMs = ms(t.check_in.slice(0, 10), t.check_in.slice(11)), outMs = ms(t.check_out.slice(0, 10), t.check_out.slice(11));
+    app.innerHTML = '<div class="donewrap">' +
+      '<div class="ticket" id="ticket"><div class="th"><img src="assets/img/logo.png" alt="Luna\'s Oasis"><div><div class="k">Booking ticket</div><div class="ref">' + esc(t.ref) + '</div></div></div>' +
+      '<div class="tb"><div class="tgrid">' +
+      '<div class="tbox"><div>Check-in</div><div>' + niceWhen(inMs) + '</div></div>' +
+      '<div class="tbox"><div>Check-out</div><div>' + niceWhen(outMs) + '</div></div>' +
+      '<div class="tbox"><div>Main guest</div><div>' + esc(t.guest_name) + '</div></div>' +
+      '<div class="tbox"><div>Guests</div><div>' + t.pax + (t.baby ? ' + baby' : '') + '</div></div></div>' +
+      '<div class="row"><span>' + t.hours + ' hours · ' + esc(t.package) + (p.extra_hours ? ' + ' + p.extra_hours + ' extra' : '') + '</span><span>' + peso(p.stay_rate) + '</span></div>' +
+      (p.discount ? '<div class="row disc"><span><span class="promo-tag">' + p.promo_pct + '% OFF</span> ' + esc(p.promo_name) + '</span><span>−' + peso(p.discount) + '</span></div>' : '') +
+      (p.extras_total ? '<div class="row"><span>Extra hours</span><span>' + peso(p.extras_total) + '</span></div>' : '') +
+      '<div class="row"><span>Security deposit (refundable)</span><span>' + peso(p.deposit) + '</span></div>' +
+      '<div class="row total"><span>Total</span><span>' + peso(p.total) + '</span></div>' +
+      '<div class="status">⏳ <span><b>Not confirmed yet.</b> Send this ticket to us on Messenger. We\'ll reply with GCash / bank details.</span></div>' +
+      '</div></div>' +
+      '<div class="thanks" style="margin:26px 0 0"><h2>Your ticket is ready</h2><p>We also sent it to ' + esc(t.guest_email) + '.</p></div>' +
+      '<div class="actions" style="justify-content:center"><button type="button" class="pill gold" data-act="save">Save ticket</button>' +
+      '<a class="pill ghost" href="' + esc(t.messenger_url || '#') + '" target="_blank" rel="noopener">Send on Messenger</a></div>' +
+      '<ol class="after"><li>Save the ticket, then send it to us on Messenger.</li><li>Pay through GCash or bank transfer and send the receipt.</li><li>We confirm and send your Guest Access Form (GAF) to your Gmail.</li></ol>' +
+      '<div class="actions" style="justify-content:center"><button type="button" class="pill ghost" data-act="again">Book another stay</button></div></div>';
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- ticket image ----------
+  function ticketPng() {
+    var t = S.ticket, p = t.price, W = 1080, H = 1500, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var g = c.getContext('2d');
+    var serif = '"Cormorant Garamond", Georgia, serif', sans = 'Jost, Arial, sans-serif';
+    var inMs = ms(t.check_in.slice(0, 10), t.check_in.slice(11)), outMs = ms(t.check_out.slice(0, 10), t.check_out.slice(11));
+    function rr(x, y, w, h, r, fill) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); g.fillStyle = fill; g.fill(); }
+    g.fillStyle = '#12100E'; g.fillRect(0, 0, W, H);
+    rr(60, 60, W - 120, H - 120, 40, '#FBF7EE');
+    rr(60, 60, W - 120, 250, 40, '#12100E'); g.fillStyle = '#12100E'; g.fillRect(60, 200, W - 120, 110);
+    g.fillStyle = '#C9A96E'; g.fillRect(60, 308, W - 120, 4);
+    return new Promise(function (res) {
+      var logo = new Image();
+      logo.onload = logo.onerror = function () {
+        if (logo.naturalWidth) { var h = 150, w = logo.naturalWidth * h / logo.naturalHeight; g.drawImage(logo, 110, 110, w, h); }
+        g.textAlign = 'right'; g.fillStyle = '#C9A96E'; g.font = '500 24px ' + sans; g.fillText('B O O K I N G   T I C K E T', W - 110, 160);
+        g.fillStyle = '#F3ECE0'; g.font = '500 72px ' + serif; g.fillText(t.ref, W - 110, 240);
+        g.textAlign = 'left';
+        var y = 360;
+        function box(x, yy, label, val) {
+          rr(x, yy, 400, 120, 22, '#F1E8DA');
+          g.fillStyle = '#6B6157'; g.font = '500 20px ' + sans; g.fillText(label.toUpperCase(), x + 26, yy + 42);
+          g.fillStyle = '#2A231D'; g.font = '600 30px ' + sans; g.fillText(val, x + 26, yy + 88);
+        }
+        var li = local(inMs), lo = local(outMs);
+        box(110, y, 'Check-in', niceDay(li.day).replace(/ \d{4}$/, ''));
+        g.fillStyle = '#7A5A2E'; g.font = '500 26px ' + sans;
+        box(570, y, 'Check-out', niceDay(lo.day).replace(/ \d{4}$/, ''));
+        y += 140;
+        box(110, y, 'Time in', hm12(li.hm)); box(570, y, 'Time out', hm12(lo.hm));
+        y += 140;
+        box(110, y, 'Main guest', t.guest_name.length > 20 ? t.guest_name.slice(0, 19) + '…' : t.guest_name);
+        box(570, y, 'Guests', t.pax + (t.baby ? ' + baby' : '') + ' pax');
+        y += 180;
+        function line(a, b, bold, color) {
+          g.fillStyle = color || '#2A231D'; g.font = (bold ? '600 ' : '400 ') + (bold ? 34 : 28) + 'px ' + sans;
+          g.textAlign = 'left'; g.fillText(a, 110, y); g.textAlign = 'right'; g.fillText(b, W - 110, y); g.textAlign = 'left';
+          if (!bold) { g.fillStyle = '#E2D6C2'; g.fillRect(110, y + 22, W - 220, 2); }
+          y += bold ? 70 : 62;
+        }
+        line((t.hours - (p.extra_hours || 0)) + ' hours stay (' + (t.pax <= 2 ? '2' : '4') + ' pax)', peso(p.stay_rate));
+        if (p.discount) line(p.promo_pct + '% OFF · ' + p.promo_name, '−' + peso(p.discount), false, '#2F5A47');
+        if (p.extras_total) line('Extra hours (' + p.extra_hours + ')', peso(p.extras_total));
+        line('Security deposit (refundable)', peso(p.deposit));
+        y += 10; line('TOTAL', peso(p.total), true);
+        rr(110, y, W - 220, 120, 22, '#FFF4D6');
+        g.fillStyle = '#2A231D'; g.font = '600 26px ' + sans; g.fillText('Not confirmed yet', 140, y + 48);
+        g.font = '400 24px ' + sans; g.fillText('Send this ticket on Messenger. GCash or bank transfer only.', 140, y + 88);
+        g.textAlign = 'center'; g.fillStyle = '#7A5A2E'; g.font = 'italic 400 30px ' + serif;
+        g.fillText('✦ Stay · Unwind · Belong ✦', W / 2, H - 100);
+        c.toBlob(function (b) { res(b); }, 'image/png');
+      };
+      logo.src = 'assets/img/logo.png';
+    });
+  }
+  function saveTicket() {
+    ticketPng().then(function (blob) {
+      var name = 'Lunas-Oasis-' + S.ticket.ref + '.png';
+      var file = window.File ? new File([blob], name, { type: 'image/png' }) : null;
+      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        navigator.share({ files: [file], title: 'Luna\'s Oasis booking ' + S.ticket.ref }).catch(function () {});
+        return;
+      }
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    });
+  }
+
+  // ---------- ID files ----------
+  function readId(i, file) {
+    var g = S.guests[i];
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) { g.file = { error: 'That file is too big. Please choose one under 15 MB.' }; render(); return; }
+    g.file = { busy: true }; render();
+    var done = function (obj) { g.file = obj; render(); };
+    if (file.type === 'application/pdf') {
+      if (file.size > 4.5 * 1024 * 1024) return done({ error: 'PDF is too big (max 4.5 MB). Try a photo instead.' });
+      var fr = new FileReader();
+      fr.onload = function () { done({ data: String(fr.result).split(',')[1], mime: 'application/pdf', label: 'PDF ready' }); };
+      fr.onerror = function () { done({ error: 'Could not read that file. Please try again.' }); };
+      fr.readAsDataURL(file);
+      return;
+    }
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      var max = 1600, sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      var c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      var dataUrl = c.toDataURL('image/jpeg', 0.82);
+      var t = document.createElement('canvas'), ts = 60 / Math.max(c.width, c.height); t.width = c.width * ts; t.height = c.height * ts;
+      t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+      URL.revokeObjectURL(url);
+      done({ data: dataUrl.split(',')[1], mime: 'image/jpeg', label: 'ID photo ready', thumb: t.toDataURL('image/jpeg', .7) });
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); done({ error: 'Please upload a JPG, PNG or PDF.' }); };
+    img.src = url;
+  }
+  function syncGuests() {
+    while (S.guests.length < S.pax) S.guests.push({ name: '', file: null });
+    S.guests.length = S.pax;
+  }
+
+  // ---------- events ----------
+  app.addEventListener('click', function (e) {
+    var el = e.target.closest('button, [data-act]'); if (!el || el.disabled) return;
+    var d = el.dataset;
+    S.error = '';
+    if (d.go) { S.step = +d.go; render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); return; }
+    if (d.day) { if (S.date !== d.day) { S.date = d.day; S.time = ''; } render(); return; }
+    if (d.pkg) { S.pkg = d.pkg; if (S.time && !timeOk(S.time)) S.time = ''; render(); return; }
+    if (d.time) { S.time = d.time; render(); return; }
+    if (d.pax) { S.pax = +d.pax; syncGuests(); render(); return; }
+    switch (d.act) {
+      case 'prev': S.m--; if (S.m < 0) { S.m = 11; S.y--; } monthChanged(); break;
+      case 'nextm': S.m++; if (S.m > 11) { S.m = 0; S.y++; } monthChanged(); break;
+      case 'exminus': S.extra = Math.max(0, S.extra - 1); render(); break;
+      case 'explus': S.extra = Math.min(6, S.extra + 1); if (S.time && !timeOk(S.time)) S.time = ''; render(); break;
+      case 'next': if (stepOk(S.step)) { S.step++; if (S.step === 3) syncGuests(); render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); } break;
+      case 'back': S.step--; render(); break;
+      case 'submit': submit(); break;
+      case 'save': saveTicket(); break;
+      case 'again': S.ticket = null; S.step = 1; S.date = ''; S.time = ''; S.agree = false; S.guests = []; blocksByMonth = {}; monthChanged(); break;
+    }
+  });
+  app.addEventListener('change', function (e) {
+    var el = e.target, d = el.dataset;
+    if (d.act === 'baby') { S.baby = el.checked; return; }
+    if (d.act === 'agree') { S.agree = el.checked; render(); return; }
+    if (d.gfile != null) readId(+d.gfile, el.files && el.files[0]);
+  });
+  app.addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.dataset.gname != null) { S.guests[+el.dataset.gname].name = el.value; refreshNav(); }
+    if (el.id === 'em') {
+      S.email = el.value; refreshNav();
+      var h = document.getElementById('emhint');
+      if (h) h.hidden = !S.email.trim() || /^[a-z0-9._%+-]+@gmail\.com$/i.test(S.email.trim()) || !/@/.test(S.email) || !/\.[a-z]{2,}$/i.test(S.email.trim());
+    }
+  });
+  function refreshNav() {
+    var nr = app.querySelector('.navrow'); if (!nr) return;
+    var tmp = document.createElement('div'); tmp.innerHTML = navRow(); nr.replaceWith(tmp.firstChild);
+    app.querySelectorAll('.steps button').forEach(function (b) { b.disabled = !canGo(+b.dataset.go); });
+  }
+
+  function monthChanged() {
+    render();
+    loadMonth(S.y, S.m).then(render).catch(function () { S.error = 'Could not load the calendar. Please check your connection and try again.'; render(); });
+  }
+
+  function submit() {
+    if (!stepOk(4) || S.busy) return;
+    var hp = document.getElementById('website');
+    S.busy = true; S.error = ''; render();
+    postJSON({
+      action: 'createBooking', website: hp ? hp.value : '',
+      guest_email: S.email.trim(), pax: S.pax, baby: S.baby, check_in: S.date + 'T' + S.time,
+      package: S.pkg, extra_hours: S.extra, agree: S.agree,
+      guests: S.guests.map(function (g) { return { full_name: g.name.trim(), id: { name: 'id', mime: g.file.mime, data: g.file.data } }; })
+    }).then(function (t) {
+      S.busy = false; S.ticket = t; render();
+    }).catch(function (err) {
+      S.busy = false;
+      S.error = (err && err.message && err.message !== 'Failed to fetch') ? err.message : 'We could not send your booking. Please check your connection and try again.';
+      if (/taken/i.test(S.error)) { S.step = 2; S.time = ''; loadMonth(S.y, S.m, true).then(render); }
+      render();
+    });
+  }
+
+  // ---------- start ----------
+  if (!API) { app.innerHTML = '<div class="loading">Booking is not set up yet.</div>'; return; }
+  getJSON({ action: 'getPublicConfig' }).then(function (c) {
+    cfg = c;
+    cfg.rates.sort(function (a, b) { return a.hours - b.hours; });
+    if (cfg.max_pax) S.pax = Math.min(2, cfg.max_pax);
+    S.pkg = cfg.rates[0] ? cfg.rates[0].package : '';
+    var md = minDay(); S.y = +md.slice(0, 4); S.m = +md.slice(5, 7) - 1;
+    monthChanged();
+  }).catch(function () {
+    app.innerHTML = '<div class="loading">We could not load the booking calendar right now.<br><br>' +
+      '<a class="pill gold" href="">Try again</a></div>';
+  });
+})();
+</script>
 </body>
 </html>
