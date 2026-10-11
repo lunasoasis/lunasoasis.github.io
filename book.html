@@ -425,6 +425,7 @@ button,input,select{font:inherit}
     app.innerHTML = '<nav class="steps" aria-label="Booking steps">' + steps + '</nav>' +
       '<div class="layout"><div class="main"><div class="card">' + body +
       (S.error ? '<div class="err" role="alert">' + esc(S.error) + '</div>' : '') +
+      (S.note ? '<p class="note" role="status" style="color:#2F5A47">' + esc(S.note) + '</p>' : '') +
       '</div>' + navRow() + '</div>' + aside + '</div>';
   }
 
@@ -436,20 +437,18 @@ button,input,select{font:inherit}
     return '<div class="navrow">' + back + next + '</div>';
   }
 
-  function stepDate() {
+    function stepDate() {
     var y = S.y, m = S.m, key = monthKey(y, m);
     var first = new Date(Date.UTC(y, m, 1)).getUTCDay(), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-    var loaded = !!blocksByMonth[key], od = outDay();
+    var loaded = !!blocksByMonth[key], od = outDay(), last = S.inDay ? addDays(S.inDay, S.nights - 1) : '';
     var cells = '';
     for (var i = 0; i < first; i++) cells += '<div class="day empty"></div>';
     for (var d = 1; d <= days; d++) {
       var day = ymd(y, m, d), st = loaded ? dayStatus(day) : (day < minDay() || day > maxDay() ? 'off' : 'free');
-      var isIn = S.inDay === day, isOut = od === day, inRange = od && day > S.inDay && day < od;
-      var cls = 'day' + (st === 'off' ? ' off' : st === 'full' ? ' full' : st === 'part' ? ' part' : '') + (isIn || isOut ? ' sel' : inRange ? ' range' : '');
-      var label = isIn ? 'Check-in' : isOut ? 'Check-out' : inRange ? 'Staying' : st === 'full' ? 'Booked' : st === 'part' ? 'Partial' : '';
-      // a check-out day only needs its morning free, so allow picking a "full" day as check-out
-      var canOut = S.inDay && !S.outPicked && day > S.inDay && daysBetween(S.inDay, day) <= MAX_NIGHTS;
-      var dis = !loaded || st === 'off' || (st === 'full' && !canOut && !isIn && !isOut);
+      var picked = S.inDay && day >= S.inDay && day <= last, isOut = od === day;
+      var cls = 'day' + (st === 'off' ? ' off' : st === 'full' ? ' full' : st === 'part' ? ' part' : '') + (picked ? ' sel' : isOut ? ' range' : '');
+      var label = picked ? (day === S.inDay ? 'Check-in' : 'Night ' + (daysBetween(S.inDay, day) + 1)) : isOut ? 'Check-out' : st === 'full' ? 'Booked' : st === 'part' ? 'Partial' : '';
+      var dis = !loaded || st === 'off' || (st === 'full' && !picked);
       cells += '<button type="button" class="' + cls + '" data-day="' + day + '"' + (dis ? ' disabled' : '') +
         ' aria-label="' + niceDay(day) + (label ? ', ' + label : '') + '"><b>' + d + '</b>' + (label ? '<small>' + label + '</small>' : '') + '</button>';
     }
@@ -463,20 +462,21 @@ button,input,select{font:inherit}
     }
     var sel = '';
     if (S.inDay) {
-      var n = nights();
+      var n = S.nights;
       sel = '<div class="selbar"><span>Check-in <b>' + shortDay(S.inDay) + '</b></span>' +
-        (od ? '<span>Check-out <b>' + shortDay(od) + '</b></span><span><b>' + n + (n > 1 ? ' nights' : ' night') + '</b></span>' : '') +
-        (!S.outPicked ? '<span style="opacity:.75">Staying overnight? Tap your check-out date (up to ' + MAX_NIGHTS + ' nights).</span>' : '') +
-        '<button type="button" data-act="clear">Clear</button></div>';
+        (od ? '<span>Check-out <b>' + shortDay(od) + '</b></span>' : '') +
+        '<span><b>' + (n > 1 ? n + ' nights' : od ? '1 night' : '1 date picked') + '</b></span>' +
+        '<button type="button" data-act="clear">Clear</button>' +
+        '<span style="flex-basis:100%;opacity:.75;font-size:13px">' + (n < MAX_NIGHTS ? 'Staying longer? Tap the next date to add a night. ' : 'That\'s the longest stay (' + MAX_NIGHTS + ' nights). ') + (n > 1 ? 'Tap the last date to remove it.' : '') + '</span></div>';
     }
-    return '<h2>When are you coming?</h2><p class="sub">Tap your check-in date. Staying overnight? Tap your check-out date too (up to ' + MAX_NIGHTS + ' nights).</p>' +
+    return '<h2>When are you coming?</h2><p class="sub">Tap the date you\'ll arrive. Staying more nights? Tap the next dates one by one (up to ' + MAX_NIGHTS + ' nights).</p>' +
       '<div class="calnav"><button type="button" class="round" data-act="prev" aria-label="Previous month"' + (canPrev ? '' : ' disabled') + '>‹</button>' +
       '<h3>' + MONTHS[m] + ' ' + y + '</h3><button type="button" class="round" data-act="nextm" aria-label="Next month"' + (canNext ? '' : ' disabled') + '>›</button></div>' +
       banner +
       '<div class="dow">' + DOW.map(function (x) { return '<div>' + x.toUpperCase() + '</div>'; }).join('') + '</div>' +
       '<div class="grid" role="group" aria-label="' + MONTHS[m] + ' ' + y + '">' + cells + '</div>' +
       (loaded ? '' : '<p class="note">Checking which dates are free…</p>') + sel +
-      '<div class="legend"><span><i style="background:#FBF7EE"></i>Available</span><span><i style="background:#EAD9B5;border-color:#EAD9B5"></i>Partly booked</span><span><i style="background:#D3C7B5;border-color:#D3C7B5"></i>Fully booked</span><span><i style="background:#12100E;border-color:#12100E"></i>Your dates</span></div>';
+      '<div class="legend"><span><i style="background:#FBF7EE"></i>Available</span><span><i style="background:#EAD9B5;border-color:#EAD9B5"></i>Partly booked</span><span><i style="background:#D3C7B5;border-color:#D3C7B5"></i>Fully booked</span><span><i style="background:#12100E;border-color:#12100E"></i>Your nights</span><span><i style="background:#E9DDC6;border-color:#D9C7A3"></i>Check-out</span></div>';
   }
   function promoForMonth(y, m) {
     var a = ymd(y, m, 1), b = ymd(y, m, new Date(Date.UTC(y, m + 1, 0)).getUTCDate());
@@ -730,25 +730,30 @@ button,input,select{font:inherit}
   }
 
   // ---------- events ----------
-  function pickDay(day) {
-    if (day === S.inDay) { S.inDay = ''; S.nights = 1; S.outPicked = false; return; }
-    if (S.inDay && !S.outPicked && day > S.inDay) {
-      var n = daysBetween(S.inDay, day);
-      if (n > MAX_NIGHTS) { S.error = 'The longest stay is ' + MAX_NIGHTS + ' nights. For longer stays, please message us.'; return; }
-      var keep = { pkg: S.pkg, nights: S.nights, extra: S.extra };
-      if (!isNightly()) S.pkg = nightlyPkg();
-      S.nights = n; S.extra = 0;
-      var fits = loadedFor(S.inDay, day) ? nextOk('00:00') : 'unknown';
-      S.extra = keep.extra;
-      if (!fits) {
-        S.pkg = keep.pkg; S.nights = keep.nights;
-        S.error = 'Some nights between ' + shortDay(S.inDay) + ' and ' + shortDay(day) + ' are already booked. Please choose other dates.';
-        return;
-      }
-      S.outPicked = true;
+   function pickDay(day) {
+    if (!S.inDay) { S.inDay = day; S.nights = 1; return; }
+    var first = S.inDay, last = addDays(first, S.nights - 1);
+    if (day === first && S.nights === 1) { S.inDay = ''; S.nights = 1; return; }       // un-pick the only date
+    if (day === first) { S.inDay = addDays(first, 1); S.nights--; return; }             // remove first night
+    if (day === last) { S.nights--; return; }                                            // remove last night
+    if (day > first && day < last) { S.nights = daysBetween(first, day); return; }       // remove this date and after
+    var nf = day < first ? day : first, nl = day > last ? day : last, n = daysBetween(nf, nl) + 1;
+    var adjacent = day === addDays(last, 1) || day === addDays(first, -1);
+    if (n > MAX_NIGHTS) {
+      if (adjacent) { S.error = 'The longest stay is ' + MAX_NIGHTS + ' nights. For longer stays, please message us.'; return; }
+      S.inDay = day; S.nights = 1; return;                                               // far away: start again
+    }
+    var keep = { inDay: S.inDay, nights: S.nights, pkg: S.pkg, extra: S.extra };
+    S.inDay = nf; S.nights = n; S.extra = 0;
+    if (!isNightly()) S.pkg = nightlyPkg();
+    var fits = loadedFor(nf, addDays(nl, 1)) ? nextOk('00:00') : 'unknown';
+    S.extra = keep.extra;
+    if (!fits) {
+      S.inDay = keep.inDay; S.nights = keep.nights; S.pkg = keep.pkg;
+      S.error = 'Sorry, some of those nights are already booked. Please pick other dates.';
       return;
     }
-    S.inDay = day; S.nights = 1; S.outPicked = false;
+    if (!adjacent) S.note = 'Your stay has to be continuous, so we also picked the dates in between.';
   }
   function loadedFor(a, b) {
     for (var d = a; d <= b; d = addDays(d, 1)) if (!blocksByMonth[d.slice(0, 7)]) return false;
@@ -771,13 +776,14 @@ button,input,select{font:inherit}
   app.addEventListener('click', function (e) {
     var el = e.target.closest('button, [data-act]'); if (!el || el.disabled) return;
     var d = el.dataset;
-    S.error = '';
+    S.error = ''; S.note = '';
     if (d.go) { S.step = +d.go; render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); return; }
     if (d.day) { pickDay(d.day); render(); loadSpan().then(render); return; }
     if (d.pkg) {
       S.pkg = d.pkg; S.tier = +d.tier;
       if (S.tier === 4 && S.pax < 3) S.pax = Math.min(4, cfg.max_pax || 4);
       if (S.tier !== 4 && S.pax > 2) S.pax = 2;
+      if (!isNightly()) S.nights = 1;
       syncGuests(); render(); return;
     }
     if (d.usetime) { setTime(d.usetime); return; }
