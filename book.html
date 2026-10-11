@@ -268,13 +268,13 @@ button,input,select{font:inherit}
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var HOUR = 3600000, DAY = 86400000, PH = 8 * HOUR, MAX_NIGHTS = 30;
+  var HOUR = 3600000, DAY = 86400000, PH = 8 * HOUR, MAX_NIGHTS = 7, MAX_EXTRA = 9;
 
   var cfg = null;            // prices and rules from the Sheet
   var blocksByMonth = {};    // 'yyyy-mm' -> [{s,e}]
   var gapMs = 2 * HOUR;
   var S = {
-    step: 1, y: 0, m: 0, inDay: '', outDay: '', time: '', pkg: '', extra: 0,
+    step: 1, y: 0, m: 0, inDay: '', nights: 1, outPicked: false, time: '', pkg: '', tier: 0, extra: 0,
     pax: 2, baby: false, guests: [], email: '', agree: false,
     busy: false, error: '', ticket: null
   };
@@ -306,11 +306,10 @@ button,input,select{font:inherit}
   function step() { return cfg.checkin_step_minutes || 30; }
 
   // The stay the guest has chosen so far.
-  function nights() {
-    if (S.outDay) return daysBetween(S.inDay, S.outDay);
-    var r = rateOf(S.pkg); return r && r.hours >= 20 ? 1 : 0;
-  }
-  function pkgNow() { return S.outDay ? nightlyPkg() : S.pkg; }
+  function isNightly() { var r = rateOf(S.pkg); return !!(r && r.hours >= 20); }
+  function nights() { return isNightly() ? S.nights : 0; }
+  function outDay() { return S.inDay && nights() ? addDays(S.inDay, S.nights) : ''; }
+  function pkgNow() { return S.pkg; }
   function stayHours() {
     var r = rateOf(pkgNow()); if (!r) return 0;
     var n = nights();
@@ -320,7 +319,7 @@ button,input,select{font:inherit}
 
   function price() {
     var r = rateOf(pkgNow()); if (!r) return null;
-    var base = S.pax <= 2 ? r.rate_1_2_pax : r.rate_3_4_pax, units = Math.max(1, nights());
+    var base = S.tier === 4 ? r.rate_3_4_pax : r.rate_1_2_pax, units = Math.max(1, nights());
     var t = { base: base, units: units, nightly: nights() > 0, lines: [], stay: 0, disc: 0, promoName: '', pcts: {} };
     for (var i = 0; i < units; i++) {
       var day = addDays(S.inDay, i), pr = promoFor(day), pct = pr ? pr.percent_off : 0, d = Math.round(base * pct / 100);
@@ -395,7 +394,7 @@ button,input,select{font:inherit}
   }
   function loadSpan() { // make sure every month the stay touches is loaded
     if (!S.inDay) return Promise.resolve();
-    var a = S.inDay, b = S.outDay || addDays(S.inDay, 2), jobs = [], seen = {};
+    var a = S.inDay, b = addDays(S.inDay, MAX_NIGHTS + 1), jobs = [], seen = {};
     for (var d = addDays(a, -1); d <= addDays(b, 1); d = addDays(d, 1)) {
       var k = d.slice(0, 7); if (seen[k]) continue; seen[k] = 1;
       jobs.push(loadMonth(+k.slice(0, 4), +k.slice(5, 7) - 1));
@@ -404,10 +403,10 @@ button,input,select{font:inherit}
   }
 
   // ---------- rendering ----------
-   var STEP_NAMES = [['Date', 'Date'], ['Guests & time', 'Time'], ['IDs', 'IDs'], ['Details', 'Details']];
+  var STEP_NAMES = [['Date', 'Date'], ['Package & time', 'Time'], ['Guests & IDs', 'IDs'], ['Details', 'Details']];
   function stepOk(n) {
     if (n === 1) return !!S.inDay;
-    if (n === 2) return !!(pkgNow() && S.time && timeOk(S.time));
+    if (n === 2) return !!(S.pkg && S.tier && S.time && timeOk(S.time));
     if (n === 3) return S.guests.length === S.pax && S.guests.every(function (g) { return g.name.trim().length >= 2 && g.file && g.file.data; });
     if (n === 4) return /^[a-z0-9._%+-]+@gmail\.com$/i.test(S.email.trim()) && S.agree;
     return false;
@@ -440,16 +439,16 @@ button,input,select{font:inherit}
   function stepDate() {
     var y = S.y, m = S.m, key = monthKey(y, m);
     var first = new Date(Date.UTC(y, m, 1)).getUTCDay(), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-    var loaded = !!blocksByMonth[key];
+    var loaded = !!blocksByMonth[key], od = outDay();
     var cells = '';
     for (var i = 0; i < first; i++) cells += '<div class="day empty"></div>';
     for (var d = 1; d <= days; d++) {
       var day = ymd(y, m, d), st = loaded ? dayStatus(day) : (day < minDay() || day > maxDay() ? 'off' : 'free');
-      var isIn = S.inDay === day, isOut = S.outDay === day, inRange = S.outDay && day > S.inDay && day < S.outDay;
+      var isIn = S.inDay === day, isOut = od === day, inRange = od && day > S.inDay && day < od;
       var cls = 'day' + (st === 'off' ? ' off' : st === 'full' ? ' full' : st === 'part' ? ' part' : '') + (isIn || isOut ? ' sel' : inRange ? ' range' : '');
       var label = isIn ? 'Check-in' : isOut ? 'Check-out' : inRange ? 'Staying' : st === 'full' ? 'Booked' : st === 'part' ? 'Partial' : '';
       // a check-out day only needs its morning free, so allow picking a "full" day as check-out
-      var canOut = S.inDay && !S.outDay && day > S.inDay;
+      var canOut = S.inDay && !S.outPicked && day > S.inDay && daysBetween(S.inDay, day) <= MAX_NIGHTS;
       var dis = !loaded || st === 'off' || (st === 'full' && !canOut && !isIn && !isOut);
       cells += '<button type="button" class="' + cls + '" data-day="' + day + '"' + (dis ? ' disabled' : '') +
         ' aria-label="' + niceDay(day) + (label ? ', ' + label : '') + '"><b>' + d + '</b>' + (label ? '<small>' + label + '</small>' : '') + '</button>';
@@ -464,13 +463,13 @@ button,input,select{font:inherit}
     }
     var sel = '';
     if (S.inDay) {
-      var n = S.outDay ? daysBetween(S.inDay, S.outDay) : 0;
+      var n = nights();
       sel = '<div class="selbar"><span>Check-in <b>' + shortDay(S.inDay) + '</b></span>' +
-        (S.outDay ? '<span>Check-out <b>' + shortDay(S.outDay) + '</b></span><span><b>' + n + (n > 1 ? ' nights' : ' night') + '</b></span>'
-                  : '<span style="opacity:.75">Staying more than one night? Tap your check-out date.</span>') +
+        (od ? '<span>Check-out <b>' + shortDay(od) + '</b></span><span><b>' + n + (n > 1 ? ' nights' : ' night') + '</b></span>' : '') +
+        (!S.outPicked ? '<span style="opacity:.75">Staying overnight? Tap your check-out date (up to ' + MAX_NIGHTS + ' nights).</span>' : '') +
         '<button type="button" data-act="clear">Clear</button></div>';
     }
-    return '<h2>When are you coming?</h2><p class="sub">Tap your check-in date. Staying longer? Tap your check-out date too, and we\'ll count the nights.</p>' +
+    return '<h2>When are you coming?</h2><p class="sub">Tap your check-in date. Staying overnight? Tap your check-out date too (up to ' + MAX_NIGHTS + ' nights).</p>' +
       '<div class="calnav"><button type="button" class="round" data-act="prev" aria-label="Previous month"' + (canPrev ? '' : ' disabled') + '>‹</button>' +
       '<h3>' + MONTHS[m] + ' ' + y + '</h3><button type="button" class="round" data-act="nextm" aria-label="Next month"' + (canNext ? '' : ' disabled') + '>›</button></div>' +
       banner +
@@ -486,7 +485,7 @@ button,input,select{font:inherit}
 
   function busyNote() {
     if (!S.inDay) return '';
-    var from = ms(S.inDay) - DAY, to = ms(S.outDay || addDays(S.inDay, 1)) + 2 * DAY;
+    var from = ms(S.inDay) - DAY, to = ms(outDay() || addDays(S.inDay, 1)) + 2 * DAY;
     var list = allBlocks().filter(function (b) { return b.e > from && b.s < to; }).sort(function (a, b) { return a.s - b.s; });
     if (!list.length) return '<div class="busy">No other bookings around your dates. Any time works.</div>';
     return '<div class="busy"><b>Already booked:</b><br>' + list.map(function (b) {
@@ -495,6 +494,7 @@ button,input,select{font:inherit}
   }
 
   function timeMsg() {
+    if (!S.pkg || !S.tier) return '<div class="tmsg">Choose a package above, then your check-in time.</div>';
     if (!S.time) return '<div class="tmsg">Type a time or use the arrows (on the hour or half hour).</div>';
     var mm = +S.time.slice(3);
     if (mm % step()) return '<div class="tmsg bad">Please use :00 or :30.</div>';
@@ -508,47 +508,49 @@ button,input,select{font:inherit}
     return msg + '</div>';
   }
 
-   function paxPicker() {
-    var max = cfg.max_pax || 4, chips = '';
-    for (var i = 1; i <= max; i++) chips += '<button type="button" class="chip" data-pax="' + i + '" aria-pressed="' + (S.pax === i) + '">' + i + (i === 1 ? ' guest' : ' guests') + '</button>';
-    var babyOk = (cfg.max_babies || 0) > 0;
-    return '<span class="label" style="margin-top:0">How many guests?</span>' +
-      '<div class="paxrow" role="group" aria-label="Number of guests">' + chips + '</div>' +
-      '<p class="note" style="margin-top:8px">1–2 guests pay the 2-pax rate · 3–4 guests pay the 4-pax rate. Kids above 2 years old count as 1 guest.</p>' +
-      (babyOk ? '<label class="check" style="margin-top:6px"><input type="checkbox" data-act="baby"' + (S.baby ? ' checked' : '') + '>Bringing a baby aged 2 or under (free, not counted)</label>' : '');
-  }
-
   function stepTime() {
-    var n = S.outDay ? daysBetween(S.inDay, S.outDay) : 0, choose, four = S.pax > 2;
-    if (S.outDay) {
-      var r = rateOf(nightlyPkg()), p = price();
-      choose = '<div class="nightcard"><div class="t">' + n + ' nights · ' + (four ? '4 pax' : '2 pax') + '</div><div class="d">' + shortDay(S.inDay) + ' → ' + shortDay(S.outDay) +
-        ' · ' + n + ' × ' + peso(p.base) + ' (' + r.hours + '-hour rate)' + (p.disc ? ' · ' + (p.pct ? p.pct + '% off' : 'promo on some nights') : '') +
-        '<br>2 pax ' + peso(r.rate_1_2_pax) + ' / night · 4 pax ' + peso(r.rate_3_4_pax) + ' / night</div></div>';
-    } else {
-      choose = '<div class="pkgs">' + cfg.rates.map(function (r) {
-        var pr = promoFor(S.inDay), pct = pr ? pr.percent_off : 0, off = function (v) { return v * (100 - pct) / 100; };
-        var base = four ? r.rate_3_4_pax : r.rate_1_2_pax;
-        return '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" aria-pressed="' + (S.pkg === r.package) + '">' +
-          '<div class="t">' + r.hours + ' hours</div><div class="d">' + (r.hours >= 20 ? 'Overnight · 1 night' : 'Day stay') + ' · ' + (four ? '4 pax' : '2 pax') + '</div>' +
-          '<div class="p">' + peso(off(base)) + (pct ? '<s>' + peso(base) + '</s>' : '') + '</div>' +
-          '<div class="d" style="margin:6px 0 0">2 pax ' + peso(off(r.rate_1_2_pax)) + ' · 4 pax ' + peso(off(r.rate_3_4_pax)) + '</div></button>';
-      }).join('') + '</div>';
+    var nightly = isNightly(), n = nights(), pr0 = promoFor(S.inDay);
+    var cards = '';
+    cfg.rates.forEach(function (r) {
+      [2, 4].forEach(function (tier) {
+        if (tier === 4 && (cfg.max_pax || 4) < 3) return;
+        var base = tier === 4 ? r.rate_3_4_pax : r.rate_1_2_pax, pct = pr0 ? pr0.percent_off : 0;
+        var on = S.pkg === r.package && S.tier === tier;
+        cards += '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" data-tier="' + tier + '" aria-pressed="' + on + '">' +
+          '<div class="t">' + r.hours + ' hours</div>' +
+          '<div class="d">' + (tier === 4 ? '4 pax · 3–4 guests' : '2 pax · 1–2 guests') + '</div>' +
+          '<div class="p">' + peso(base * (100 - pct) / 100) + (pct ? '<s>' + peso(base) + '</s>' : '') + '</div>' +
+          '<div class="d" style="margin:4px 0 0">' + (r.hours >= 20 ? 'per night' : 'day stay') + '</div></button>';
+      });
+    });
+    var nightBox = '';
+    if (nightly) {
+      var r = rateOf(S.pkg), p = S.tier ? price() : null;
+      nightBox = '<span class="label">Nights (up to ' + MAX_NIGHTS + ')</span>' +
+        '<div class="stepper"><button type="button" class="round" data-act="nminus" aria-label="Fewer nights"' + (n > 1 ? '' : ' disabled') + '>−</button>' +
+        '<output aria-live="polite">' + n + (n > 1 ? ' nights' : ' night') + '</output>' +
+        '<button type="button" class="round" data-act="nplus" aria-label="More nights"' + (n < MAX_NIGHTS ? '' : ' disabled') + '>+</button></div>' +
+        '<p class="note" style="margin-top:8px">' + shortDay(S.inDay) + ' → ' + shortDay(outDay()) +
+        (p ? ' · ' + n + ' × ' + peso(p.base) + ' = ' + peso(p.stay) + (p.disc ? ' (−' + peso(p.disc) + ' promo)' : '') : '') +
+        '. One continuous stay: you check out ' + (24 - r.hours) + ' hours earlier than your check-in time, on ' + shortDay(outDay()) + '.</p>';
     }
     var extra = '<span class="label">Extra hours (' + peso(cfg.extra_hour_rate) + ' each, not discounted)</span>' +
       '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
       '<output aria-live="polite">' + S.extra + ' hr' + (S.extra === 1 ? '' : 's') + '</output>' +
-      '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < 12 ? '' : ' disabled') + '>+</button></div>';
+      '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < MAX_EXTRA ? '' : ' disabled') + '>+</button></div>' +
+      '<p class="note" style="margin-top:8px">Up to ' + MAX_EXTRA + ' extra hours. Need 10 hours or more? Add a night instead.</p>';
     var time = '<label class="label" for="tin">Check-in time on ' + niceDay(S.inDay) + '</label>' +
       '<div class="timebox"><button type="button" class="round" data-act="tdown" aria-label="30 minutes earlier">−</button>' +
-      '<input type="time" id="tin" step="' + (step() * 60) + '" value="' + esc(S.time) + '"' + (S.time && !timeOk(S.time) ? ' class="bad"' : '') + '>' +
+      '<input type="time" id="tin" step="' + (step() * 60) + '" value="' + esc(S.time) + '"' + (S.pkg && S.tier && S.time && !timeOk(S.time) ? ' class="bad"' : '') + '>' +
       '<button type="button" class="round" data-act="tup" aria-label="30 minutes later">+</button></div>' +
       '<div id="tmsg">' + timeMsg() + '</div>' + busyNote();
-    return '<h2>Guests, package &amp; time</h2><p class="sub">' + (S.outDay ? 'Each night is charged the 22-hour rate.' : 'Choose 10 or 22 hours.') + ' Then pick your check-in time.</p>' +
-      paxPicker() + '<span class="label">' + (S.outDay ? 'Your stay' : 'Package') + '</span>' + choose + time + extra;
+    return '<h2>Package &amp; time</h2><p class="sub">Choose your package, then your check-in time.' + (pr0 ? ' Promo prices shown.' : '') + '</p>' +
+      '<div class="pkgs">' + cards + '</div>' + nightBox + time + extra;
   }
 
   function stepGuests() {
+    var lo = S.tier === 4 ? 3 : 1, hi = S.tier === 4 ? Math.min(4, cfg.max_pax || 4) : 2, chips = '';
+    for (var i = lo; i <= hi; i++) chips += '<button type="button" class="chip" data-pax="' + i + '" aria-pressed="' + (S.pax === i) + '">' + i + (i === 1 ? ' guest' : ' guests') + '</button>';
     var list = S.guests.map(function (g, i) {
       var st = g.file ? (g.file.error ? '<span class="fs">' + esc(g.file.error) + '</span>' : g.file.busy ? '<span class="fs">Preparing…</span>' :
         (g.file.thumb ? '<img src="' + g.file.thumb + '" alt="">' : '') + '<span class="fs ok">✓ ' + esc(g.file.label) + '</span>') : '<span class="fs">No ID yet</span>';
@@ -558,11 +560,14 @@ button,input,select{font:inherit}
         '<div class="file"><label for="gf' + i + '">' + (g.file && g.file.data ? 'Change ID' : 'Upload ID') + '</label>' +
         '<input type="file" id="gf' + i + '" data-gfile="' + i + '" accept="image/*,application/pdf">' + st + '</div></div>';
     }).join('');
-    return '<h2>Who is coming?</h2><p class="sub">' + S.pax + (S.pax === 1 ? ' guest' : ' guests') + (S.baby ? ' + 1 baby' : '') +
-      '. To change the number of guests, tap <b>Back</b>.</p>' +
-      '<span class="label" style="margin-top:0">Names and valid IDs</span>' + list +
+    var babyOk = (cfg.max_babies || 0) > 0;
+    return '<h2>Who is coming?</h2><p class="sub">Your package is for ' + (S.tier === 4 ? '3–4' : '1–2') + ' guests. Kids above 2 years old count as 1 guest. No extra guests.</p>' +
+      '<div class="paxrow" role="group" aria-label="Number of guests">' + chips + '</div>' +
+      (babyOk ? '<label class="check"><input type="checkbox" data-act="baby"' + (S.baby ? ' checked' : '') + '>Bringing a baby aged 2 or under (free, not counted, no ID needed)</label>' : '') +
+      '<span class="label">Names and valid IDs</span>' + list +
       '<p class="note">Every guest needs a valid ID (photo or PDF). IDs are kept private and deleted after your stay.</p>';
   }
+
   function stepDetails() {
     return '<h2>Your details</h2><p class="sub">We send your booking and Guest Access Form (GAF) to this Gmail.</p>' +
       '<label class="label" for="em" style="margin-top:0">Gmail address</label>' +
@@ -726,17 +731,24 @@ button,input,select{font:inherit}
 
   // ---------- events ----------
   function pickDay(day) {
-    if (!S.inDay || S.outDay || day < S.inDay) { S.inDay = day; S.outDay = ''; }
-    else if (day === S.inDay) { S.inDay = ''; S.outDay = ''; }
-    else if (daysBetween(S.inDay, day) > MAX_NIGHTS) S.error = 'For stays longer than ' + MAX_NIGHTS + ' nights, please message us.';
-    else {
-      var keepOut = S.outDay, keepExtra = S.extra;
-      S.outDay = day; S.extra = 0;
+    if (day === S.inDay) { S.inDay = ''; S.nights = 1; S.outPicked = false; return; }
+    if (S.inDay && !S.outPicked && day > S.inDay) {
+      var n = daysBetween(S.inDay, day);
+      if (n > MAX_NIGHTS) { S.error = 'The longest stay is ' + MAX_NIGHTS + ' nights. For longer stays, please message us.'; return; }
+      var keep = { pkg: S.pkg, nights: S.nights, extra: S.extra };
+      if (!isNightly()) S.pkg = nightlyPkg();
+      S.nights = n; S.extra = 0;
       var fits = loadedFor(S.inDay, day) ? nextOk('00:00') : 'unknown';
-      S.extra = keepExtra;
-      if (!fits) { S.outDay = keepOut; S.error = 'Some nights between ' + shortDay(S.inDay) + ' and ' + shortDay(day) + ' are already booked. Please choose other dates.'; }
+      S.extra = keep.extra;
+      if (!fits) {
+        S.pkg = keep.pkg; S.nights = keep.nights;
+        S.error = 'Some nights between ' + shortDay(S.inDay) + ' and ' + shortDay(day) + ' are already booked. Please choose other dates.';
+        return;
+      }
+      S.outPicked = true;
+      return;
     }
-    if (S.outDay) S.pkg = nightlyPkg();
+    S.inDay = day; S.nights = 1; S.outPicked = false;
   }
   function loadedFor(a, b) {
     for (var d = a; d <= b; d = addDays(d, 1)) if (!blocksByMonth[d.slice(0, 7)]) return false;
@@ -762,21 +774,28 @@ button,input,select{font:inherit}
     S.error = '';
     if (d.go) { S.step = +d.go; render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); return; }
     if (d.day) { pickDay(d.day); render(); loadSpan().then(render); return; }
-    if (d.pkg) { S.pkg = d.pkg; render(); return; }
+    if (d.pkg) {
+      S.pkg = d.pkg; S.tier = +d.tier;
+      if (S.tier === 4 && S.pax < 3) S.pax = Math.min(4, cfg.max_pax || 4);
+      if (S.tier !== 4 && S.pax > 2) S.pax = 2;
+      syncGuests(); render(); return;
+    }
     if (d.usetime) { setTime(d.usetime); return; }
     if (d.pax) { S.pax = +d.pax; syncGuests(); render(); return; }
     switch (d.act) {
       case 'prev': S.m--; if (S.m < 0) { S.m = 11; S.y--; } monthChanged(); break;
       case 'nextm': S.m++; if (S.m > 11) { S.m = 0; S.y++; } monthChanged(); break;
-      case 'clear': S.inDay = ''; S.outDay = ''; S.time = ''; render(); break;
+      case 'clear': S.inDay = ''; S.nights = 1; S.outPicked = false; S.time = ''; render(); break;
+      case 'nminus': S.nights = Math.max(1, S.nights - 1); S.outPicked = true; render(); break;
+      case 'nplus': S.nights = Math.min(MAX_NIGHTS, S.nights + 1); S.outPicked = true; render(); break;
       case 'tdown': shiftTime(-1); break;
       case 'tup': shiftTime(1); break;
       case 'exminus': S.extra = Math.max(0, S.extra - 1); render(); break;
-      case 'explus': S.extra = Math.min(12, S.extra + 1); render(); break;
+      case 'explus': S.extra = Math.min(MAX_EXTRA, S.extra + 1); render(); break;
       case 'next':
         if (stepOk(S.step)) {
           S.step++;
-          if (S.step === 2 && !S.time) { var def = timeOk('14:00') ? '14:00' : nextOk('14:00') || nextOk('00:00'); S.time = def || ''; }
+          if (S.step === 2 && !S.time) S.time = '14:00';
           if (S.step === 3) syncGuests();
           render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' });
         }
@@ -784,7 +803,7 @@ button,input,select{font:inherit}
       case 'back': S.step--; render(); break;
       case 'submit': submit(); break;
       case 'save': saveTicket(); break;
-      case 'again': S.ticket = null; S.step = 1; S.inDay = ''; S.outDay = ''; S.time = ''; S.agree = false; S.guests = []; blocksByMonth = {}; monthChanged(); break;
+      case 'again': S.ticket = null; S.step = 1; S.inDay = ''; S.nights = 1; S.outPicked = false; S.pkg = ''; S.tier = 0; S.extra = 0; S.time = ''; S.agree = false; S.guests = []; blocksByMonth = {}; monthChanged(); break;
     }
   });
   app.addEventListener('change', function (e) {
@@ -844,7 +863,6 @@ button,input,select{font:inherit}
     cfg = c;
     cfg.rates.sort(function (a, b) { return a.hours - b.hours; });
     if (cfg.max_pax) S.pax = Math.min(2, cfg.max_pax);
-    S.pkg = cfg.rates[0] ? cfg.rates[0].package : '';
     var md = minDay(); S.y = +md.slice(0, 4); S.m = +md.slice(5, 7) - 1;
     monthChanged();
   }).catch(function () {
