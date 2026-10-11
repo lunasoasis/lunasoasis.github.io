@@ -327,8 +327,11 @@ button,input,select{font:inherit}
       if (pr && !t.promoName) t.promoName = pr.name;
     }
     var keys = Object.keys(t.pcts); t.pct = keys.length === 1 ? +keys[0] : null;
+       // staying over: the hours between each 22-hour night (24 - 22 = 2) are paid like extra hours
+    t.stayHrs = nights() > 1 ? (nights() - 1) * (24 - r.hours) : 0;
+    t.stayTotal = t.stayHrs * cfg.extra_hour_rate;
     t.extras = S.extra * cfg.extra_hour_rate; t.deposit = cfg.deposit;
-    t.total = t.stay - t.disc + t.extras + t.deposit;
+    t.total = t.stay - t.disc + t.stayTotal + t.extras + t.deposit;
     return t;
   }
 
@@ -536,7 +539,8 @@ button,input,select{font:inherit}
         '<div class="stepper"><button type="button" class="round" data-act="nminus" aria-label="Fewer nights"' + (n > 1 ? '' : ' disabled') + '>−</button>' +
         '<output aria-live="polite">' + n + (n > 1 ? ' nights' : ' night') + '</output>' +
         '<button type="button" class="round" data-act="nplus" aria-label="More nights"' + (n < MAX_NIGHTS ? '' : ' disabled') + '>+</button></div>' +
-        (line ? '<p style="margin:10px 0 0;font-size:15px">' + line + '</p>' : '');
+        (line ? '<p style="margin:10px 0 0;font-size:15px">' + line + '</p>' : '') +
+        (p && p.stayHrs ? '<p style="margin:4px 0 0;font-size:15px">Stay-over ' + p.stayHrs + ' hrs × ' + peso(cfg.extra_hour_rate) + ' = <b>' + peso(p.stayTotal) + '</b></p>' : '');
     }
     var extra = '<span class="label">Extra hours · ' + peso(cfg.extra_hour_rate) + ' each</span>' +
       '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
@@ -593,6 +597,7 @@ button,input,select{font:inherit}
     var rows = '<div class="row"><span>' + (o.nightly ? o.units + (o.units > 1 ? ' nights' : ' night') + ' × ' + peso(o.base) : o.hoursLabel + ' stay') +
       ' <span style="opacity:.7">(' + (o.pax <= 2 ? '2' : '4') + ' pax)</span></span><span>' + peso(o.stay) + '</span></div>';
     if (o.disc) rows += '<div class="row disc"><span><span class="promo-tag">' + (o.pct ? o.pct + '% OFF' : 'PROMO') + '</span> ' + esc(o.promoName || '') + '</span><span>−' + peso(o.disc) + '</span></div>';
+    if (o.stayHrs) rows += '<div class="row"><span>Stay-over hours (' + o.stayHrs + ' × ' + peso(cfg.extra_hour_rate) + ')</span><span>' + peso(o.stayTotal) + '</span></div>';
     if (o.extras) rows += '<div class="row"><span>Extra hours (' + o.extraHours + ' × ' + peso(cfg ? cfg.extra_hour_rate : o.extras / o.extraHours) + ')</span><span>' + peso(o.extras) + '</span></div>';
     rows += '<div class="row"><span>Security deposit (refundable)</span><span>' + peso(o.deposit) + '</span></div>';
     rows += '<div class="row total"><span>Total</span><span>' + peso(o.total) + '</span></div>';
@@ -606,7 +611,7 @@ button,input,select{font:inherit}
       '<div class="row"><span>Check-out</span><span>' + niceWhen(st.e) + '</span></div>' +
       '<div class="row"><span>Guests</span><span>' + S.pax + (S.baby ? ' + baby' : '') + '</span></div>' +
       priceRows({ nightly: p.nightly, units: p.units, base: p.base, hoursLabel: rateOf(pkgNow()).hours + '-hour', pax: S.pax, stay: p.stay, disc: p.disc, pct: p.pct, promoName: p.promoName,
-        extras: p.extras, extraHours: S.extra, deposit: p.deposit, total: p.total }) + '</div></div>';
+      stayHrs: p.stayHrs, stayTotal: p.stayTotal, extras: p.extras, extraHours: S.extra, deposit: p.deposit, total: p.total }) + '</div></div>';
   }
 
   function tMs(v) { return ms(v.slice(0, 10), v.slice(11)); }
@@ -620,7 +625,7 @@ button,input,select{font:inherit}
       '<div class="tbox"><div>Main guest</div><div>' + esc(t.guest_name) + '</div></div>' +
       '<div class="tbox"><div>Guests</div><div>' + t.pax + (t.baby ? ' + baby' : '') + (t.nights ? ' · ' + t.nights + (t.nights > 1 ? ' nights' : ' night') : '') + '</div></div></div>' +
       priceRows({ nightly: t.nights > 0, units: t.nights || 1, base: p.unit_rate, hoursLabel: (t.hours - p.extra_hours) + '-hour', pax: t.pax, stay: p.stay_rate, disc: p.discount, pct: p.promo_pct, promoName: p.promo_name,
-        extras: p.extras_total, extraHours: p.extra_hours, deposit: p.deposit, total: p.total }) +
+        stayHrs: p.stayover_hours, stayTotal: p.stayover_total, extras: p.extras_total, extraHours: p.extra_hours, deposit: p.deposit, total: p.total }) +
       '<div class="status">⏳ <span><b>Not confirmed yet.</b> Send this ticket to us on Messenger. We\'ll reply with GCash / bank details.</span></div>' +
       '</div></div>' +
       '<div class="thanks" style="margin:26px 0 0"><h2>Your ticket is ready</h2><p>We also sent it to ' + esc(t.guest_email) + '.</p></div>' +
@@ -634,7 +639,8 @@ button,input,select{font:inherit}
   // ---------- ticket image ----------
   function ticketPng() {
     var t = S.ticket, p = t.price, W = 1080;
-    var H = 1500 - (p.discount ? 0 : 62) - (p.extras_total ? 0 : 62), c = document.createElement('canvas');
+        if (p.stayover_total) line('Stay-over hours (' + p.stayover_hours + ' × ' + peso(cfg.extra_hour_rate) + ')', peso(p.stayover_total));
+        if (p.extras_total) line('Extra hours (' + p.extra_hours + ' × ' + peso(cfg.extra_hour_rate) + ')', peso(p.extras_total)); c = document.createElement('canvas');
     c.width = W; c.height = H;
     var g = c.getContext('2d');
     var serif = '"Cormorant Garamond", Georgia, serif', sans = 'Jost, Arial, sans-serif';
