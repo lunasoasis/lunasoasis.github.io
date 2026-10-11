@@ -241,3 +241,46 @@ section:first-of-type > div[style*="vertical-rl"]{ top: 50% !important; transfor
 @media (max-width: 820px){
   section:first-of-type > header.wrap{ display: flex !important; justify-content: space-between; }
 }
+
+
+/* =====================================================================
+   "Before you arrive" — Check-in, Check-out and House rules as dropdowns
+   ===================================================================== */
+.faq-wrap{max-width:900px !important}
+.faq-head{text-align:center;margin-bottom:34px}
+.faq-head .h2{margin-top:14px !important}
+.faq-head .h2 em{color:#C9A96E}
+.faq-head p{color:#B9AE9F;margin:10px 0 0;font-size:15px}
+.acc{border:1px solid rgba(201,169,110,.35);background:linear-gradient(180deg,rgba(243,236,224,.04),rgba(243,236,224,0));margin-bottom:14px;transition:border-color .3s, box-shadow .3s}
+.acc[open]{border-color:#C9A96E;box-shadow:0 0 50px rgba(201,169,110,.12)}
+.acc summary{list-style:none;display:flex;align-items:center;gap:22px;padding:24px 28px;cursor:pointer;color:#F3ECE0}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary:focus-visible{outline:2px solid #C9A96E;outline-offset:3px}
+.acc-no{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:30px;color:#C9A96E;min-width:40px}
+.acc-t{flex:1;font-family:'Cormorant Garamond',serif;font-size:34px;line-height:1.1}
+.acc-t small{display:block;font-family:Jost,sans-serif;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#B9AE9F;margin-top:6px}
+.acc-ic{position:relative;width:42px;height:42px;border:1px solid #C9A96E;border-radius:50%;flex:none;transition:transform .35s ease, background .35s}
+.acc-ic:before,.acc-ic:after{content:"";position:absolute;left:50%;top:50%;width:14px;height:1.5px;background:#C9A96E;transform:translate(-50%,-50%)}
+.acc-ic:after{transform:translate(-50%,-50%) rotate(90deg)}
+.acc[open] .acc-ic{transform:rotate(45deg);background:#C9A96E}
+.acc[open] .acc-ic:before,.acc[open] .acc-ic:after{background:#12100E}
+.acc summary:hover .acc-t{color:#C9A96E}
+.acc-list{list-style:none;counter-reset:n;margin:0;padding:0 28px 22px 90px;animation:accIn .4s ease}
+.acc-list li{counter-increment:n;position:relative;padding:12px 0 12px 34px;border-top:1px solid rgba(201,169,110,.18);font-size:16px;line-height:1.6;color:#F3ECE0}
+.acc-list li:before{content:counter(n);position:absolute;left:0;top:9px;font-family:'Cormorant Garamond',serif;font-size:22px;color:#C9A96E}
+@keyframes accIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.acc-list{animation:none}.acc-ic{transition:none}}
+@media (max-width: 560px){
+  .faq-head{margin-bottom:18px}
+  .faq-head p{font-size:13px !important}
+  .acc{margin-bottom:10px}
+  .acc summary{gap:12px;padding:14px 14px}
+  .acc-no{font-size:20px;min-width:24px}
+  .acc-t{font-size:22px}
+  .acc-t small{font-size:9px;letter-spacing:.22em;margin-top:3px}
+  .acc-ic{width:32px;height:32px}
+  .acc-ic:before,.acc-ic:after{width:11px}
+  .acc-list{padding:0 14px 12px 50px}
+  .acc-list li{font-size:13px !important;padding:9px 0 9px 24px}
+  .acc-list li:before{font-size:17px;top:6px}
+}
