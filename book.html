@@ -517,34 +517,38 @@ button,input,select{font:inherit}
         var base = tier === 4 ? r.rate_3_4_pax : r.rate_1_2_pax, pct = pr0 ? pr0.percent_off : 0;
         var on = S.pkg === r.package && S.tier === tier;
         cards += '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" data-tier="' + tier + '" aria-pressed="' + on + '">' +
-          '<div class="t">' + r.hours + ' hours</div>' +
-          '<div class="d">' + (tier === 4 ? '4 pax · 3–4 guests' : '2 pax · 1–2 guests') + '</div>' +
-          '<div class="p">' + peso(base * (100 - pct) / 100) + (pct ? '<s>' + peso(base) + '</s>' : '') + '</div>' +
-          '<div class="d" style="margin:4px 0 0">' + (r.hours >= 20 ? 'per night' : 'day stay') + '</div></button>';
+          '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px">' +
+          '<span class="t" style="white-space:nowrap">' + r.hours + ' hours</span>' +
+          '<span style="background:' + (on ? '#12100E' : '#C9A96E') + ';color:' + (on ? '#C9A96E' : '#12100E') + ';border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;letter-spacing:.08em;white-space:nowrap">' + tier + ' PAX</span></div>' +
+          '<div class="p" style="margin-top:10px">' + peso(base * (100 - pct) / 100) + (r.hours >= 20 ? '<span style="font-size:14px;font-family:Jost,sans-serif;font-weight:400;color:#6B6157"> /night</span>' : '') + '</div>' +
+          (pct ? '<s style="margin:0">' + peso(base) + '</s>' : '') + '</button>';
       });
     });
     var nightBox = '';
     if (nightly) {
-      var r = rateOf(S.pkg), p = S.tier ? price() : null;
-      nightBox = '<span class="label">Nights (up to ' + MAX_NIGHTS + ')</span>' +
+      var p = S.tier ? price() : null, line = '';
+      if (p) {
+        line = p.pct !== null
+          ? n + (n > 1 ? ' nights' : ' night') + ' × ' + peso(p.base * (100 - p.pct) / 100) + ' = <b>' + peso(p.stay - p.disc) + '</b>'
+          : n + (n > 1 ? ' nights' : ' night') + ' = <b>' + peso(p.stay - p.disc) + '</b>';
+      }
+      nightBox = '<span class="label">Nights</span>' +
         '<div class="stepper"><button type="button" class="round" data-act="nminus" aria-label="Fewer nights"' + (n > 1 ? '' : ' disabled') + '>−</button>' +
         '<output aria-live="polite">' + n + (n > 1 ? ' nights' : ' night') + '</output>' +
         '<button type="button" class="round" data-act="nplus" aria-label="More nights"' + (n < MAX_NIGHTS ? '' : ' disabled') + '>+</button></div>' +
-        '<p class="note" style="margin-top:8px">' + shortDay(S.inDay) + ' → ' + shortDay(outDay()) +
-        (p ? ' · ' + n + ' × ' + peso(p.base) + ' = ' + peso(p.stay) + (p.disc ? ' (−' + peso(p.disc) + ' promo)' : '') : '') +
-        '. One continuous stay: you check out ' + (24 - r.hours) + ' hours earlier than your check-in time, on ' + shortDay(outDay()) + '.</p>';
+        (line ? '<p style="margin:10px 0 0;font-size:15px">' + line + '</p>' : '');
     }
-    var extra = '<span class="label">Extra hours (' + peso(cfg.extra_hour_rate) + ' each, not discounted)</span>' +
+    var extra = '<span class="label">Extra hours · ' + peso(cfg.extra_hour_rate) + ' each</span>' +
       '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
       '<output aria-live="polite">' + S.extra + ' hr' + (S.extra === 1 ? '' : 's') + '</output>' +
       '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < MAX_EXTRA ? '' : ' disabled') + '>+</button></div>' +
-      '<p class="note" style="margin-top:8px">Up to ' + MAX_EXTRA + ' extra hours. Need 10 hours or more? Add a night instead.</p>';
+      (S.extra ? '<p style="margin:10px 0 0;font-size:15px">' + S.extra + ' × ' + peso(cfg.extra_hour_rate) + ' = <b>' + peso(S.extra * cfg.extra_hour_rate) + '</b></p>' : '');
     var time = '<label class="label" for="tin">Check-in time on ' + niceDay(S.inDay) + '</label>' +
       '<div class="timebox"><button type="button" class="round" data-act="tdown" aria-label="30 minutes earlier">−</button>' +
       '<input type="time" id="tin" step="' + (step() * 60) + '" value="' + esc(S.time) + '"' + (S.pkg && S.tier && S.time && !timeOk(S.time) ? ' class="bad"' : '') + '>' +
       '<button type="button" class="round" data-act="tup" aria-label="30 minutes later">+</button></div>' +
-      '<div id="tmsg">' + timeMsg() + '</div>' + busyNote();
-    return '<h2>Package &amp; time</h2><p class="sub">Choose your package, then your check-in time.' + (pr0 ? ' Promo prices shown.' : '') + '</p>' +
+      '<div id="tmsg">' + timeMsg() + '</div>';
+    return '<h2 style="margin-bottom:18px">Package &amp; time</h2>' +
       '<div class="pkgs">' + cards + '</div>' + nightBox + time + extra;
   }
 
