@@ -308,6 +308,9 @@ button,input,select{font:inherit}
   // The stay the guest has chosen so far.
   function isNightly() { var r = rateOf(S.pkg); return !!(r && r.hours >= 20); }
   function nights() { return isNightly() ? S.nights : 0; }
+    // dates shown on the calendar: a 10-hour stay uses only the check-in date,
+  // but S.nights is kept so switching back to 22 hours restores the nights
+  function pickedDays() { return S.pkg && !isNightly() ? 1 : S.nights; }
   function outDay() { return S.inDay && nights() ? addDays(S.inDay, S.nights) : ''; }
   function pkgNow() { return S.pkg; }
   function stayHours() {
@@ -443,7 +446,7 @@ button,input,select{font:inherit}
     function stepDate() {
     var y = S.y, m = S.m, key = monthKey(y, m);
     var first = new Date(Date.UTC(y, m, 1)).getUTCDay(), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-    var loaded = !!blocksByMonth[key], od = outDay(), last = S.inDay ? addDays(S.inDay, S.nights - 1) : '';
+    var loaded = !!blocksByMonth[key], od = outDay(), last = S.inDay ? addDays(S.inDay, pickedDays() - 1) : '';
     var cells = '';
     for (var i = 0; i < first; i++) cells += '<div class="day empty"></div>';
     for (var d = 1; d <= days; d++) {
@@ -465,10 +468,10 @@ button,input,select{font:inherit}
     }
     var sel = '';
     if (S.inDay) {
-      var n = S.nights;
+    var n = pickedDays();
       sel = '<div class="selbar"><span>Check-in <b>' + shortDay(S.inDay) + '</b></span>' +
         (od ? '<span>Check-out <b>' + shortDay(od) + '</b></span>' : '') +
-        '<span><b>' + (n > 1 ? n + ' nights' : od ? '1 night' : '1 date picked') + '</b></span>' +
+        '<span><b>' + (n > 1 ? n + ' nights' : od ? '1 night' : S.pkg ? '10-hour stay' : '1 date picked') + '</b></span>' +
         '<button type="button" data-act="clear">Clear</button>' +
         '<span style="flex-basis:100%;opacity:.75;font-size:13px">' + (n < MAX_NIGHTS ? 'Staying longer? Tap the next date to add a night. ' : 'That\'s the longest stay (' + MAX_NIGHTS + ' nights). ') + (n > 1 ? 'Tap the last date to remove it.' : '') + '</span></div>';
     }
@@ -511,7 +514,7 @@ button,input,select{font:inherit}
     return msg + '</div>';
   }
 
-  function stepTime() {
+    function stepTime() {
     var nightly = isNightly(), n = nights(), pr0 = promoFor(S.inDay);
     var cards = '';
     cfg.rates.forEach(function (r) {
@@ -540,7 +543,12 @@ button,input,select{font:inherit}
         '<output aria-live="polite">' + n + (n > 1 ? ' nights' : ' night') + '</output>' +
         '<button type="button" class="round" data-act="nplus" aria-label="More nights"' + (n < MAX_NIGHTS ? '' : ' disabled') + '>+</button></div>' +
         (line ? '<p style="margin:10px 0 0;font-size:15px">' + line + '</p>' : '') +
-        (p && p.stayHrs ? '<p style="margin:4px 0 0;font-size:15px">Stay-over ' + p.stayHrs + ' hrs × ' + peso(cfg.extra_hour_rate) + ' = <b>' + peso(p.stayTotal) + '</b></p>' : '');
+        (p && p.stayHrs ? '<p style="margin:4px 0 0;font-size:15px">Stay-over ' + p.stayHrs + ' hrs × ' + peso(cfg.extra_hour_rate) + ' = <b>' + peso(p.stayTotal) + '</b></p>' : '') +
+        (p ? '<p style="margin:4px 0 0;font-size:15px">Security deposit (refundable) = <b>' + peso(p.deposit) + '</b></p>' : '');
+    } else if (S.pkg && S.tier) {
+      var p10 = price();
+      nightBox = '<p style="margin:14px 0 0;font-size:15px">' + rateOf(S.pkg).hours + ' hours = <b>' + peso(p10.stay - p10.disc) + '</b></p>' +
+        '<p style="margin:4px 0 0;font-size:15px">Security deposit (refundable) = <b>' + peso(p10.deposit) + '</b></p>';
     }
     var extra = '<span class="label">Extra hours · ' + peso(cfg.extra_hour_rate) + ' each</span>' +
       '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
@@ -552,8 +560,10 @@ button,input,select{font:inherit}
       '<input type="time" id="tin" step="' + (step() * 60) + '" value="' + esc(S.time) + '"' + (S.pkg && S.tier && S.time && !timeOk(S.time) ? ' class="bad"' : '') + '>' +
       '<button type="button" class="round" data-act="tup" aria-label="30 minutes later">+</button></div>' +
       '<div id="tmsg">' + timeMsg() + '</div>';
+    var pt = S.pkg && S.tier ? price() : null;
+    var total = pt ? '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:22px;padding-top:14px;border-top:1px solid #E2D6C2"><span style="font-size:13px;letter-spacing:.2em;text-transform:uppercase">Total</span><span style="font-family:\'Cormorant Garamond\',serif;font-size:32px;font-weight:600">' + peso(pt.total) + '</span></div>' : '';
     return '<h2 style="margin-bottom:18px">Package &amp; time</h2>' +
-      '<div class="pkgs">' + cards + '</div>' + nightBox + time + extra;
+      '<div class="pkgs">' + cards + '</div>' + nightBox + time + extra + total;
   }
 
   function stepGuests() {
@@ -741,11 +751,11 @@ button,input,select{font:inherit}
 
   // ---------- events ----------
    function pickDay(day) {
-    if (!S.inDay) { S.inDay = day; S.nights = 1; return; }
-    var first = S.inDay, last = addDays(first, S.nights - 1);
-    if (day === first && S.nights === 1) { S.inDay = ''; S.nights = 1; return; }       // un-pick the only date
-    if (day === first) { S.inDay = addDays(first, 1); S.nights--; return; }             // remove first night
-    if (day === last) { S.nights--; return; }                                            // remove last night
+       if (!S.inDay) { S.inDay = day; S.nights = 1; return; }
+    var cur = pickedDays(), first = S.inDay, last = addDays(first, cur - 1);
+    if (day === first && cur === 1) { S.inDay = ''; S.nights = 1; return; }       // un-pick the only date
+    if (day === first) { S.inDay = addDays(first, 1); S.nights = cur - 1; return; } // remove first night
+    if (day === last) { S.nights = cur - 1; return; }                             // remove last night
     if (day > first && day < last) { S.nights = daysBetween(first, day); return; }       // remove this date and after
     var nf = day < first ? day : first, nl = day > last ? day : last, n = daysBetween(nf, nl) + 1;
     var adjacent = day === addDays(last, 1) || day === addDays(first, -1);
@@ -793,7 +803,6 @@ button,input,select{font:inherit}
       S.pkg = d.pkg; S.tier = +d.tier;
       if (S.tier === 4 && S.pax < 3) S.pax = Math.min(4, cfg.max_pax || 4);
       if (S.tier !== 4 && S.pax > 2) S.pax = 2;
-      if (!isNightly()) S.nights = 1;
       syncGuests(); render(); return;
     }
     if (d.usetime) { setTime(d.usetime); return; }
