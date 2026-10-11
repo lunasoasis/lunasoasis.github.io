@@ -284,3 +284,12 @@ section:first-of-type > div[style*="vertical-rl"]{ top: 50% !important; transfor
   .acc-list li{font-size:13px !important;padding:9px 0 9px 24px}
   .acc-list li:before{font-size:17px;top:6px}
 }
+
+
+/* Suite: keep the small bedroom photo inside its gold frame (iPhone fix) */
+#suite .two>div:last-child>div:nth-child(2){ aspect-ratio: 4 / 5; overflow: hidden; }
+#suite .two>div:last-child>div:nth-child(2) img{
+  position: absolute; top: 10px; left: 10px;
+  width: calc(100% - 20px) !important; height: calc(100% - 20px) !important;
+  object-fit: cover;
+}
