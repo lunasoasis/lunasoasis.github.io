@@ -3,33 +3,513 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Staff sign-in — Luna's Oasis</title>
+<title>Staff portal — Luna's Oasis</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#12100E">
 <link rel="icon" type="image/png" href="../assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&amp;family=Jost:wght@300;400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300&amp;family=Jost:wght@300;400;500;600&amp;family=Pinyon+Script&amp;display=swap" rel="stylesheet">
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#12100E;color:#F3ECE0;font-family:Jost,sans-serif;text-align:center;padding:32px 16px;box-sizing:border-box}
-main{max-width:560px}
-img{height:72px;width:auto}
-.cap{font-size:12px;letter-spacing:.38em;text-transform:uppercase;color:#C9A96E;margin:28px 0 14px}
-h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(34px,7vw,56px);line-height:1.08;margin:0}
-h1 em{color:#C9A96E}
-p{color:#B9AE9F;line-height:1.7;font-size:16px;margin:18px 0 30px}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 28px;font-size:12px;letter-spacing:.28em;text-transform:uppercase;text-decoration:none;background:#C9A96E;color:#12100E;margin:6px}
-.btn.ghost{background:none;border:1px solid #C9A96E;color:#C9A96E}
-.btn:focus-visible{outline:2px solid #F3ECE0;outline-offset:3px}
+:root{
+  --ink:#12100E; --ink2:#1B1714; --cream:#F3ECE0; --paper:#FBF7EE; --line:#E2D6C2;
+  --gold:#C9A96E; --bronze:#7A5A2E; --text:#2A231D; --muted:#6B6157; --soft:#B9AE9F;
+  --bad:#9A3B2E; --ok:#2F5A47; --warn:#8A5A12;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream);font-family:Jost,sans-serif;font-size:16px;line-height:1.5}
+a{color:var(--gold)}
+button,input,select,textarea{font:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;border-radius:999px;border:0;cursor:pointer;font-size:12px;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+.pill.gold{background:var(--gold);color:var(--ink)}
+.pill.dark{background:var(--ink);color:var(--gold)}
+.pill.ghost{background:transparent;color:var(--cream);border:1px solid rgba(243,236,224,.45)}
+.pill.line{background:transparent;color:var(--text);border:1.5px solid var(--text)}
+.pill.red{background:transparent;color:var(--bad);border:1.5px solid var(--bad)}
+.pill.sm{min-height:36px;padding:0 14px;font-size:11px;letter-spacing:.14em}
+.pill:disabled{opacity:.45;cursor:not-allowed}
+.pill:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.err{background:#F6E3DF;color:var(--bad);border-radius:12px;padding:10px 14px;font-size:14px;margin-top:12px}
+.okmsg{background:#E3EFE8;color:var(--ok);border-radius:12px;padding:10px 14px;font-size:14px;margin-top:12px}
+.label{display:block;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+.inp{width:100%;min-height:46px;border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:0 14px;color:var(--text);font-size:16px}
+.inp:focus{outline:none;border-color:var(--bronze)}
+.loading{padding:80px 16px;text-align:center;color:var(--soft)}
+.spin{width:28px;height:28px;border-radius:50%;border:2px solid rgba(201,169,110,.3);border-top-color:var(--gold);animation:sp 1s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* sign-in */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px}
+.lcard{width:100%;max-width:420px;background:var(--cream);color:var(--text);border-radius:26px;padding:32px 30px}
+.lcard .logo{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.lcard .logo img{height:50px}
+.lcard .logo span{font-family:'Cormorant Garamond',serif;font-size:18px;letter-spacing:.24em;text-transform:uppercase}
+.lcard h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:36px;line-height:1.05;margin:0}
+.lcard .sub{color:var(--muted);font-size:14px;margin:6px 0 4px}
+.check{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:14px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--bronze)}
+.lcard .foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:var(--muted)}
+.lcard .foot a{color:var(--bronze)}
+
+/* top bar */
+.top{border-bottom:1px solid rgba(201,169,110,.25);position:sticky;top:0;background:var(--ink);z-index:5}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:68px}
+.brand{display:flex;align-items:center;gap:12px;color:var(--cream);text-decoration:none}
+.brand img{height:40px}
+.brand b{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;letter-spacing:.22em;text-transform:uppercase}
+.brand small{display:block;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.who{position:relative}
+.who > button{display:flex;align-items:center;gap:10px;background:none;border:1px solid rgba(243,236,224,.3);color:var(--cream);border-radius:999px;padding:5px 14px 5px 5px;cursor:pointer}
+.av{width:32px;height:32px;border-radius:50%;background:var(--gold);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+.menu{position:absolute;right:0;top:calc(100% + 8px);background:var(--cream);color:var(--text);border-radius:16px;min-width:230px;padding:8px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.menu .mh{padding:8px 12px 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.menu .mh div:first-child{font-weight:600}
+.menu .mh div:last-child{font-size:12px;color:var(--muted);text-transform:capitalize}
+.menu button,.menu a{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:10px;color:var(--text);cursor:pointer;text-decoration:none;font-size:14px}
+.menu button:hover,.menu a:hover{background:#EDE3D2}
+
+/* page */
+.page{padding:26px 0 80px}
+.hello{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.hello h1{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:40px;line-height:1;margin:0}
+.hello p{color:var(--soft);margin:6px 0 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--ink2);border:1px solid rgba(201,169,110,.3);border-radius:18px;padding:14px 18px}
+.stat .k{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.stat .v{font-family:'Cormorant Garamond',serif;font-size:26px;line-height:1.15;margin-top:4px}
+.stat .s{font-size:13px;color:var(--soft)}
+.panel{background:var(--cream);color:var(--text);border-radius:24px;padding:20px 22px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--paper);color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--gold);border-color:var(--ink)}
+.tab .n{opacity:.7;margin-left:4px}
+.search{min-height:40px;max-width:260px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.rowb{cursor:pointer}
+tr.rowb:hover td{background:#F7F0E3}
+td.num,th.num{text-align:right;white-space:nowrap}
+.ref{font-weight:600;white-space:nowrap}
+.st{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:500;white-space:nowrap}
+.st.Pending{background:#FFF1CC;color:#7A5200}
+.st.Confirmed{background:#DDEBE3;color:var(--ok)}
+.st.Checked-in{background:#12100E;color:var(--gold)}
+.st.Completed{background:#E6DCCB;color:var(--muted)}
+.st.Cancelled,.st.No-show{background:#F6E3DF;color:var(--bad)}
+.bal{color:var(--bad);font-weight:600}
+.paid{color:var(--ok)}
+.cards{display:none}
+.empty{padding:30px 10px;text-align:center;color:var(--muted)}
+
+/* drawer */
+.shade{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--cream);color:var(--text);z-index:21;overflow:auto;box-shadow:-20px 0 50px rgba(0,0,0,.4)}
+.dh{position:sticky;top:0;background:var(--ink);color:var(--cream);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:2}
+.dh .t{font-family:'Cormorant Garamond',serif;font-size:26px;line-height:1}
+.dh button{background:none;border:1px solid rgba(243,236,224,.4);color:var(--cream);border-radius:999px;width:38px;height:38px;cursor:pointer;font-size:18px}
+.sec{padding:16px 20px;border-bottom:1px solid var(--line)}
+.sec h3{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 10px}
+.big{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1.1}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kv div{background:#F1E8DA;border-radius:12px;padding:8px 12px}
+.kv small{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.row:last-child{border-bottom:0}
+.row.tot{font-weight:600;font-size:15px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.glist .g{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.glist .g:last-child{border-bottom:0}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;min-height:42px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--gold);border-color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stepper{display:inline-flex;align-items:center;gap:12px}
+.round{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--text);cursor:pointer;font-size:18px}
+.round:disabled{opacity:.35;cursor:default}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.hint.warn{color:var(--warn)}
+.ticks label{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:14px;cursor:pointer}
+.ticks input{width:20px;height:20px;accent-color:var(--ok)}
+.viewer{position:fixed;inset:0;background:#0E0C0B;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+.viewer img{max-width:100%;max-height:80vh;border-radius:10px}
+.viewer iframe{width:min(820px,100%);height:80vh;border:0;background:#fff;border-radius:10px}
+.viewer p{margin:0;color:var(--cream)}
+
+@media (max-width: 820px){
+  .wrap{padding:0 14px}
+  .brand b{font-size:14px}
+  .brand img{height:32px}
+  .who > button span.n{display:none}
+  .who > button{padding:4px}
+  .hello h1{font-size:30px}
+  .stats{grid-template-columns:1fr;gap:8px}
+  .stat{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .stat .v{font-size:20px;margin:0;text-align:right}
+  .panel{padding:14px;border-radius:18px}
+  .search{max-width:none;width:100%}
+  table{display:none}
+  .cards{display:block}
+  .card{border:1px solid var(--line);background:var(--paper);border-radius:16px;padding:12px 14px;margin-top:8px;cursor:pointer;width:100%;text-align:left;color:var(--text)}
+  .card .l1{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .card .l2{font-size:14px;margin-top:4px}
+  .card .l3{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:4px}
+  .lcard{padding:26px 20px}
+}
 </style>
 </head>
 <body>
-<main>
-<a href="../"><img src="../assets/img/logo.png" alt="Luna's Oasis home"></a>
-<div class="cap">Staff</div>
-<h1>Staff sign-in <em>coming soon</em></h1>
-<p>The staff portal is being set up.</p>
-<a class="btn" href="../">Back to home</a>
-</main>
+<div id="app"><div class="loading"><div class="spin"></div>Loading…</div></div>
+
+<script src="../js/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = window.LUNA_CONFIG && window.LUNA_CONFIG.API_URL;
+  var app = document.getElementById('app');
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var HOUR = 3600000, PH = 8 * HOUR;
+
+  var S = {
+    token: '', me: null, data: null, tab: 'upcoming', q: '', open: '', menu: false,
+    busy: false, error: '', msg: '', loginErr: '',
+    pay: { amount: '', method: 'GCash', refno: '' }, ext: 1, dep: { method: 'GCash', deduction: '', reason: '' }
+  };
+
+  // ---------- helpers ----------
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function peso(n) { return '₱' + Math.round(Number(n) || 0).toLocaleString('en-PH'); }
+  function ms(v) { if (!v) return 0; var p = v.slice(0, 10).split('-'), t = (v.slice(11) || '00:00').split(':'); return Date.UTC(+p[0], +p[1] - 1, +p[2], +t[0], +t[1]) - PH; }
+  function when(v) {
+    if (!v) return '—';
+    var d = new Date(ms(v) + PH), h = d.getUTCHours(), m = d.getUTCMinutes();
+    return DOW[d.getUTCDay()] + ', ' + MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ' · ' + ((h + 11) % 12 + 1) + ':' + (m < 10 ? '0' : '') + m + ' ' + (h < 12 ? 'AM' : 'PM');
+  }
+  function nowMs() { return Date.now(); }
+  function initials(n) { return String(n || '?').replace(/^Ms\.?\s+|^Mr\.?\s+/i, '').split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase(); }
+  function store(k, v) { try { if (v === null) { localStorage.removeItem(k); sessionStorage.removeItem(k); } else (S.remember ? localStorage : sessionStorage).setItem(k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lead(b) { return (b.guests[0] && b.guests[0].name) || b.guest_email; }
+  function hours(b) { return Math.round((ms(b.check_out) - ms(b.check_in)) / HOUR); }
+  function active(b) { return ['Cancelled', 'No-show'].indexOf(b.status) === -1; }
+
+  function post(body) {
+    body.token = S.token;
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) { var e = new Error(j.error || 'Something went wrong.'); e.auth = j.auth; throw e; }
+        return j.data;
+      });
+  }
+  function act(body, okMsg) {   // staff action that returns fresh bookings
+    S.busy = true; S.error = ''; S.msg = ''; render();
+    return post(body).then(function (d) {
+      S.busy = false; S.data = d; S.me = d.me; S.msg = okMsg || ''; render();
+    }).catch(fail);
+  }
+  function fail(err) {
+    S.busy = false;
+    if (err && err.auth) { signOut('Please sign in again.'); return; }
+    S.error = err && err.message && err.message !== 'Failed to fetch' ? err.message : 'Could not reach the server. Please check your connection.';
+    render();
+  }
+
+  // ---------- sign-in ----------
+  function renderLogin() {
+    app.innerHTML = '<div class="login"><form class="lcard" id="lf" novalidate>' +
+      '<div class="logo"><img src="../assets/img/logo.png" alt=""><span>Luna\'s Oasis</span></div>' +
+      '<h1>Staff sign-in</h1><p class="sub">For Luna\'s Oasis staff only.</p>' +
+      '<label class="label" for="le">Gmail</label><input class="inp" id="le" type="email" autocomplete="username" inputmode="email" placeholder="yourname@gmail.com" required>' +
+      '<label class="label" for="lp">Password</label><input class="inp" id="lp" type="password" autocomplete="current-password" required>' +
+      '<label class="check"><input type="checkbox" id="lr"> Keep me signed in on this device</label>' +
+      (S.loginErr ? '<div class="err" role="alert">' + esc(S.loginErr) + '</div>' : '') +
+      '<button class="pill gold" style="width:100%;margin-top:18px" ' + (S.busy ? 'disabled' : '') + '>' + (S.busy ? 'Signing in…' : 'Sign in') + '</button>' +
+      '<div class="foot"><span>Forgot password? Ask the admin.</span><a href="../">← Back to the website</a></div>' +
+      '</form></div>';
+    document.getElementById('lf').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = document.getElementById('le').value.trim(), pw = document.getElementById('lp').value;
+      S.remember = document.getElementById('lr').checked;
+      if (!email || !pw) { S.loginErr = 'Please enter your Gmail and password.'; renderLogin(); return; }
+      S.busy = true; S.loginErr = ''; renderLogin();
+      post({ action: 'staffLogin', email: email, password: pw, remember: S.remember }).then(function (d) {
+        S.token = d.token; S.me = d.me; store('lo_staff', d.token); S.busy = false; loadAll();
+      }).catch(function (err) {
+        S.busy = false; S.loginErr = err.message === 'Failed to fetch' ? 'Could not reach the server.' : err.message; renderLogin();
+        var el = document.getElementById('le'); if (el) el.value = email;
+      });
+    });
+  }
+  function signOut(msg) { S.token = ''; S.data = null; S.open = ''; S.menu = false; store('lo_staff', null); S.loginErr = msg || ''; renderLogin(); }
+  function loadAll() {
+    app.innerHTML = '<div class="loading"><div class="spin"></div>Loading bookings…</div>';
+    post({ action: 'staffBookings' }).then(function (d) { S.data = d; S.me = d.me; render(); }).catch(function (err) {
+      if (err.auth) signOut(''); else { app.innerHTML = '<div class="loading">Could not load bookings. <a href="">Try again</a></div>'; }
+    });
+  }
+
+  // ---------- main page ----------
+  function lists() {
+    var now = nowMs(), q = S.q.trim().toLowerCase(), all = S.data.bookings.slice();
+    var t = {
+      upcoming: all.filter(function (b) { return active(b) && b.status !== 'Completed' && ms(b.check_out) >= now - 6 * HOUR; }).sort(function (a, b) { return ms(a.check_in) - ms(b.check_in); }),
+      pending: all.filter(function (b) { return b.status === 'Pending'; }).sort(function (a, b) { return ms(a.check_in) - ms(b.check_in); }),
+      unpaid: all.filter(function (b) { return active(b) && b.balance > 0; }).sort(function (a, b) { return ms(a.check_in) - ms(b.check_in); }),
+      all: all.sort(function (a, b) { return ms(b.check_in) - ms(a.check_in); })
+    };
+    if (q) Object.keys(t).forEach(function (k) {
+      t[k] = t[k].filter(function (b) { return (b.ref + ' ' + b.guest_email + ' ' + b.guests.map(function (g) { return g.name; }).join(' ')).toLowerCase().indexOf(q) !== -1; });
+    });
+    return t;
+  }
+  function stats() {
+    var now = nowMs(), act = S.data.bookings.filter(function (b) { return active(b) && b.status !== 'Completed'; });
+    var cur = act.filter(function (b) { return ms(b.check_in) <= now && now < ms(b.check_out); })[0];
+    var next = act.filter(function (b) { return ms(b.check_in) > now; }).sort(function (a, b) { return ms(a.check_in) - ms(b.check_in); })[0];
+    var unpaid = S.data.bookings.filter(function (b) { return active(b) && b.balance > 0; });
+    return {
+      cur: cur ? { v: lead(cur), s: 'Out ' + when(cur.check_out) } : { v: 'No one', s: 'The unit is free right now' },
+      next: next ? { v: lead(next), s: when(next.check_in) } : { v: 'None yet', s: 'No upcoming bookings' },
+      unpaid: { v: peso(unpaid.reduce(function (a, b) { return a + b.balance; }, 0)), s: unpaid.length + ' booking' + (unpaid.length === 1 ? '' : 's') }
+    };
+  }
+
+  function render() {
+    if (!S.data) return;
+    var focus = document.activeElement && document.activeElement.id, caret = focus === 'q' ? document.activeElement.selectionStart : null;
+    var oldDrawer = app.querySelector('.drawer'), keepScroll = oldDrawer ? oldDrawer.scrollTop : 0;
+    var L = lists(), st = stats(), list = L[S.tab], me = S.me;
+    var hour = new Date(Date.now() + PH).getUTCHours();
+    var greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    var tabs = [['upcoming', 'Upcoming'], ['pending', 'Needs confirming'], ['unpaid', 'Unpaid'], ['all', 'All']].map(function (t) {
+      return '<button type="button" class="tab" data-tab="' + t[0] + '" aria-pressed="' + (S.tab === t[0]) + '">' + t[1] + '<span class="n">' + L[t[0]].length + '</span></button>';
+    }).join('');
+    var rows = list.map(function (b) {
+      return '<tr class="rowb" data-open="' + esc(b.ref) + '" tabindex="0"><td class="ref">' + esc(b.ref) + '</td><td><span class="st ' + esc(b.status) + '">' + esc(b.status) + '</span></td>' +
+        '<td>' + esc(lead(b)) + '</td><td>' + b.pax + '</td><td>' + when(b.check_in) + '</td><td>' + when(b.check_out) + '</td><td class="num">' + hours(b) + '</td>' +
+        '<td class="num">' + peso(b.total) + '</td><td class="num ' + (b.balance > 0 ? 'bal' : 'paid') + '">' + (b.balance > 0 ? peso(b.balance) : 'Paid') + '</td></tr>';
+    }).join('');
+    var cards = list.map(function (b) {
+      return '<button type="button" class="card" data-open="' + esc(b.ref) + '"><div class="l1"><span class="ref">' + esc(b.ref) + '</span><span class="st ' + esc(b.status) + '">' + esc(b.status) + '</span></div>' +
+        '<div class="l2">' + esc(lead(b)) + ' · ' + b.pax + ' pax</div>' +
+        '<div class="l3"><span>' + when(b.check_in) + '</span><span class="' + (b.balance > 0 ? 'bal' : 'paid') + '">' + (b.balance > 0 ? peso(b.balance) + ' due' : 'Paid') + '</span></div></button>';
+    }).join('');
+    app.innerHTML =
+      '<header class="top"><div class="wrap">' +
+      '<a class="brand" href="./"><img src="../assets/img/logo.png" alt=""><span><b>Luna\'s Oasis</b><small>Staff portal</small></span></a>' +
+      '<div class="who"><button type="button" data-act="menu" aria-expanded="' + S.menu + '"><span class="av">' + esc(initials(me.name)) + '</span><span class="n">' + esc(me.name) + '</span></button>' +
+      (S.menu ? '<div class="menu"><div class="mh"><div>' + esc(me.name) + '</div><div>' + esc(me.role === 'coadmin' ? 'Co-admin' : me.role) + ' · ' + esc(me.email) + '</div></div>' +
+        '<button type="button" data-act="chpw">Change my password</button><a href="../" target="_blank" rel="noopener">View public site</a><button type="button" data-act="logout">Log out</button></div>' : '') +
+      '</div></div></header>' +
+      '<main class="wrap page">' +
+      '<div class="hello"><div><h1>Bookings &amp; payments</h1><p>' + greet + ', ' + esc(me.name) + ' — here\'s what\'s happening at Luna\'s Oasis.</p></div>' +
+      '<button type="button" class="pill ghost sm" data-act="refresh">↻ Refresh</button></div>' +
+      '<div class="stats">' +
+      '<div class="stat"><div><div class="k">Staying now</div><div class="s">' + esc(st.cur.s) + '</div></div><div class="v">' + esc(st.cur.v) + '</div></div>' +
+      '<div class="stat"><div><div class="k">Next time-in</div><div class="s">' + esc(st.next.s) + '</div></div><div class="v">' + esc(st.next.v) + '</div></div>' +
+      '<div class="stat"><div><div class="k">Unpaid balances</div><div class="s">' + esc(st.unpaid.s) + '</div></div><div class="v">' + esc(st.unpaid.v) + '</div></div>' +
+      '</div>' +
+      (S.error && !S.open ? '<div class="err" role="alert" style="margin-bottom:12px">' + esc(S.error) + '</div>' : '') +
+      '<section class="panel"><div class="tools"><div class="tabs" role="group" aria-label="Filter bookings">' + tabs + '</div>' +
+      '<label class="sr" for="q">Search bookings</label><input class="inp search" id="q" type="search" placeholder="Search name, ref or Gmail" value="' + esc(S.q) + '"></div>' +
+      (list.length ? '<table><thead><tr><th>Ref</th><th>Status</th><th>Lead guest</th><th>Pax</th><th>Time-in</th><th>Time-out</th><th class="num">Hrs</th><th class="num">Total</th><th class="num">Balance</th></tr></thead><tbody>' + rows + '</tbody></table><div class="cards">' + cards + '</div>'
+        : '<div class="empty">No bookings here.</div>') +
+      '</section></main>' + (S.open ? drawer() : '') + (S.chpw ? chpwBox() : '');
+    if (focus === 'q') { var q = document.getElementById('q'); q.focus(); try { q.setSelectionRange(caret, caret); } catch (e) {} }
+    var newDrawer = app.querySelector('.drawer'); if (newDrawer && oldDrawer) newDrawer.scrollTop = keepScroll;
+  }
+
+  // ---------- booking drawer ----------
+  function drawer() {
+    var b = S.data.bookings.filter(function (x) { return x.ref === S.open; })[0];
+    if (!b) return '';
+    var rate = S.data.settings.extra_hour_rate, dep = b.deposit_info || {};
+    var minPay = Math.round((b.total - b.deposit) * (S.data.settings.min_payment_pct || 50) / 100) + b.deposit;
+    var statusBtns = {
+      'Pending': [['Confirmed', 'Confirm booking', 'gold'], ['Cancelled', 'Cancel', 'red']],
+      'Confirmed': [['Checked-in', 'Mark checked-in', 'gold'], ['No-show', 'No-show', 'line'], ['Cancelled', 'Cancel', 'red']],
+      'Checked-in': [['Confirmed', 'Undo check-in', 'line']],
+      'Completed': [],
+      'Cancelled': [['Pending', 'Restore booking', 'line']],
+      'No-show': [['Confirmed', 'Undo no-show', 'line']]
+    }[b.status] || [];
+    var stayLabel = b.nights ? b.nights + (b.nights > 1 ? ' nights' : ' night') + ' · ' + b.package : b.package + ' stay';
+    var pays = b.payments.map(function (p) {
+      return '<div class="row"><span>✓ ' + peso(p.amount) + ' · ' + esc(p.method) + (p.reference_no ? ' #' + esc(p.reference_no) : '') + '<br><small style="color:var(--muted)">' + when(p.at) + ' · ' + esc(p.by.split('@')[0]) + '</small></span></div>';
+    }).join('');
+    var canEdit = active(b) && b.status !== 'Completed';
+    var newOut = when(new Date(ms(b.check_out) + S.ext * HOUR + PH).toISOString().slice(0, 16));
+    var refundAmt = Math.max(0, b.deposit - (Number(S.dep.deduction) || 0));
+    var gaps = b.guests.map(function (g) {
+      return '<div class="g"><span>' + g.no + '. ' + esc(g.name) + (g.no === 1 ? ' <small style="color:var(--muted)">(main)</small>' : '') + '</span>' +
+        (g.has_id ? '<button type="button" class="pill line sm" data-id="' + g.no + '">View ID</button>' : '<small style="color:var(--muted)">ID deleted</small>') + '</div>';
+    }).join('');
+    return '<div class="shade" data-act="close"></div><aside class="drawer" role="dialog" aria-label="Booking ' + esc(b.ref) + '">' +
+      '<div class="dh"><div><div class="t">' + esc(b.ref) + '</div><span class="st ' + esc(b.status) + '" style="margin-top:6px">' + esc(b.status) + '</span></div><button type="button" data-act="close" aria-label="Close">✕</button></div>' +
+      (S.error ? '<div class="sec"><div class="err" role="alert" style="margin:0">' + esc(S.error) + '</div></div>' : '') +
+      (S.msg ? '<div class="sec"><div class="okmsg" role="status" style="margin:0">' + esc(S.msg) + '</div></div>' : '') +
+      '<div class="sec"><div class="big">' + esc(lead(b)) + '</div><div style="font-size:14px;color:var(--muted)">' + b.pax + ' guest' + (b.pax > 1 ? 's' : '') + (b.baby ? ' + baby' : '') + ' · <a href="mailto:' + esc(b.guest_email) + '" style="color:var(--bronze)">' + esc(b.guest_email) + '</a></div>' +
+      '<div class="kv" style="margin-top:12px"><div><small>Time-in</small>' + when(b.check_in) + '</div><div><small>Time-out</small>' + when(b.check_out) + '</div>' +
+      '<div><small>Stay</small>' + esc(stayLabel) + '</div><div><small>Booked</small>' + when(b.created_at) + '</div></div>' +
+      (statusBtns.length ? '<div class="acts" style="margin-top:14px">' + statusBtns.map(function (x) { return '<button type="button" class="pill ' + x[2] + ' sm" data-status="' + x[0] + '"' + (S.busy ? ' disabled' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' : '') +
+      (b.status === 'Pending' ? '<p class="hint' + (b.paid_total < minPay ? ' warn' : '') + '">' + (b.paid_total < minPay ? 'Paid ' + peso(b.paid_total) + ' of the ' + peso(minPay) + ' needed to confirm (' + (S.data.settings.min_payment_pct || 50) + '% + deposit).' : 'Enough is paid to confirm.') + ' Confirming emails the guest.</p>' : '') +
+      '</div>' +
+      '<div class="sec"><h3>Guests &amp; IDs</h3><div class="glist">' + gaps + '</div></div>' +
+      '<div class="sec"><h3>Payment</h3>' +
+      '<div class="row"><span>' + (b.nights ? b.nights + (b.nights > 1 ? ' nights' : ' night') : b.package) + ' · ' + (b.pax <= 2 ? '2' : '4') + ' pax rate</span><span>' + peso(b.stay_rate) + '</span></div>' +
+      (b.discount ? '<div class="row" style="color:var(--ok)"><span>' + esc(b.promo_name || 'Promo') + (b.promo_pct ? ' (−' + b.promo_pct + '%)' : '') + '</span><span>−' + peso(b.discount) + '</span></div>' : '') +
+      (b.extras_total ? '<div class="row"><span>Extra &amp; stay-over hours (' + b.extra_hours + ' × ' + peso(rate) + ')</span><span>' + peso(b.extras_total) + '</span></div>' : '') +
+      '<div class="row"><span>Security deposit</span><span>' + peso(b.deposit) + '</span></div>' +
+      '<div class="row tot"><span>Total</span><span>' + peso(b.total) + '</span></div>' +
+      '<div class="row"><span>Paid</span><span class="paid">' + peso(b.paid_total) + '</span></div>' +
+      '<div class="row tot"><span>Balance</span><span class="' + (b.balance > 0 ? 'bal' : 'paid') + '">' + peso(b.balance) + '</span></div>' +
+      (pays ? '<div style="margin-top:8px">' + pays + '</div>' : '') +
+      (canEdit && b.balance > 0 ? '<span class="label">Record a payment</span>' +
+        '<div class="two"><div><label class="sr" for="pa">Amount</label><input class="inp" id="pa" type="number" inputmode="decimal" min="1" placeholder="Amount (₱)" value="' + esc(S.pay.amount) + '"></div>' +
+        '<div><label class="sr" for="pr">Reference no.</label><input class="inp" id="pr" placeholder="Reference no. (optional)" value="' + esc(S.pay.refno) + '"></div></div>' +
+        '<div class="seg" style="margin-top:8px" role="group" aria-label="Paid by">' + ['GCash', 'Bank transfer'].map(function (m) { return '<button type="button" data-paym="' + m + '" aria-pressed="' + (S.pay.method === m) + '">' + m + '</button>'; }).join('') + '</div>' +
+        '<div class="acts" style="margin-top:10px"><button type="button" class="pill gold sm" data-act="pay"' + (S.busy ? ' disabled' : '') + '>Record payment</button>' +
+        '<button type="button" class="pill line sm" data-act="payall"' + (S.busy ? ' disabled' : '') + '>Mark balance (' + peso(b.balance) + ') as paid</button></div>' : '') +
+      '</div>' +
+      (canEdit ? '<div class="sec"><h3>Extend stay</h3>' +
+        '<div class="stepper"><button type="button" class="round" data-act="exm" aria-label="Fewer hours"' + (S.ext > 1 ? '' : ' disabled') + '>−</button><output>' + S.ext + ' hr' + (S.ext > 1 ? 's' : '') + '</output>' +
+        '<button type="button" class="round" data-act="exp" aria-label="More hours"' + (S.ext < S.data.settings.max_extend_hours ? '' : ' disabled') + '>+</button></div>' +
+        '<p class="hint">New time-out: <b>' + newOut + '</b> · Charge ' + S.ext + ' × ' + peso(rate) + ' = <b>' + peso(S.ext * rate) + '</b></p>' +
+        '<button type="button" class="pill dark sm" data-act="extend"' + (S.busy ? ' disabled' : '') + '>Apply extension</button></div>' : '') +
+      (['Checked-in', 'Completed'].indexOf(b.status) !== -1 || dep.photo_ok || dep.refunded_at ? '<div class="sec"><h3>Security deposit · ' + peso(b.deposit) + '</h3>' +
+        (dep.refunded_at
+          ? '<p style="margin:0">✓ Returned ' + peso(dep.refunded_amount) + ' by ' + esc(dep.refund_method) + ' on ' + when(dep.refunded_at) + (dep.deduction ? '<br>Deducted ' + peso(dep.deduction) + ': ' + esc(dep.deduction_reason) : '') + '</p>'
+          : '<p class="hint" style="margin-top:0">Return it after the guest sends the check-out photo and the unit is checked.</p>' +
+            '<div class="ticks"><label><input type="checkbox" data-depf="photo_ok"' + (dep.photo_ok ? ' checked' : '') + '> Guest sent check-out photo</label>' +
+            '<label><input type="checkbox" data-depf="items_ok"' + (dep.items_ok ? ' checked' : '') + '> Items complete &amp; unit clean</label></div>' +
+            '<div class="two" style="margin-top:6px"><div><label class="sr" for="dd">Deduction</label><input class="inp" id="dd" type="number" min="0" placeholder="Deduction ₱ (if any)" value="' + esc(S.dep.deduction) + '"></div>' +
+            '<div><label class="sr" for="dr">Reason</label><input class="inp" id="dr" placeholder="Reason (if any)" value="' + esc(S.dep.reason) + '"></div></div>' +
+            '<div class="seg" style="margin-top:8px" role="group" aria-label="Return by">' + ['GCash', 'Bank transfer'].map(function (m) { return '<button type="button" data-depm="' + m + '" aria-pressed="' + (S.dep.method === m) + '">' + m + '</button>'; }).join('') + '</div>' +
+            '<button type="button" class="pill gold sm" style="margin-top:10px" data-act="refund"' + (dep.photo_ok && dep.items_ok && !S.busy ? '' : ' disabled') + '>Mark ' + peso(refundAmt) + ' returned</button>') +
+        '</div>' : '') +
+      '</aside>';
+  }
+
+  function chpwBox() {
+    return '<div class="shade" data-act="chpwclose"></div><aside class="drawer" role="dialog" aria-label="Change my password" style="height:auto;bottom:auto;top:10%;right:50%;transform:translateX(50%);border-radius:22px;width:min(420px,94%)">' +
+      '<div class="dh" style="border-radius:22px 22px 0 0"><div class="t">Change my password</div><button type="button" data-act="chpwclose" aria-label="Close">✕</button></div>' +
+      '<form class="sec" id="cpf" style="border:0">' +
+      '<label class="label" for="cp0" style="margin-top:0">Current password</label><input class="inp" id="cp0" type="password" autocomplete="current-password">' +
+      '<label class="label" for="cp1">New password (8+ characters)</label><input class="inp" id="cp1" type="password" autocomplete="new-password">' +
+      (S.error ? '<div class="err" role="alert">' + esc(S.error) + '</div>' : '') +
+      (S.msg ? '<div class="okmsg" role="status">' + esc(S.msg) + '</div>' : '') +
+      '<button class="pill gold" style="width:100%;margin-top:16px"' + (S.busy ? ' disabled' : '') + '>Save new password</button></form></aside>';
+  }
+
+  function viewId(ref, no) {
+    var box = document.createElement('div');
+    box.className = 'viewer'; box.setAttribute('role', 'dialog');
+    box.innerHTML = '<div class="spin"></div><p>Loading ID…</p>';
+    document.body.appendChild(box);
+    post({ action: 'staffGetId', ref: ref, guest_no: no }).then(function (d) {
+      var url = 'data:' + d.mime + ';base64,' + d.data;
+      if (d.mime === 'application/pdf') {
+        var bin = atob(d.data), arr = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        url = URL.createObjectURL(new Blob([arr], { type: 'application/pdf' }));
+      }
+      box.innerHTML = '<p>' + esc(d.name) + '</p>' + (d.mime === 'application/pdf' ? '<iframe src="' + url + '" title="ID"></iframe><a class="pill ghost sm" href="' + url + '" target="_blank" rel="noopener">Open PDF</a>' : '<img src="' + url + '" alt="ID of ' + esc(d.name) + '">') +
+        '<button type="button" class="pill gold">Close</button>';
+      box.querySelector('button').onclick = function () { box.remove(); };
+    }).catch(function (err) {
+      if (err.auth) { box.remove(); signOut('Please sign in again.'); return; }
+      box.innerHTML = '<p>' + esc(err.message) + '</p><button type="button" class="pill gold">Close</button>';
+      box.querySelector('button').onclick = function () { box.remove(); };
+    });
+  }
+
+  function openBooking(ref) {
+    S.open = ref; S.error = ''; S.msg = ''; S.ext = 1;
+    var b = S.data.bookings.filter(function (x) { return x.ref === ref; })[0];
+    S.pay = { amount: b && b.balance > 0 ? String(b.balance) : '', method: 'GCash', refno: '' };
+    S.dep = { method: 'GCash', deduction: '', reason: '' };
+    render();
+  }
+
+  // ---------- events ----------
+  app.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act],[data-tab],[data-open],[data-status],[data-id],[data-paym],[data-depm]');
+    if (!el || el.disabled) { if (S.menu && !e.target.closest('.menu')) { S.menu = false; render(); } return; }
+    var d = el.dataset, b = S.open && S.data.bookings.filter(function (x) { return x.ref === S.open; })[0];
+    if (d.tab) { S.tab = d.tab; render(); return; }
+    if (d.open) { openBooking(d.open); return; }
+    if (d.id) { viewId(S.open, +d.id); return; }
+    if (d.paym) { S.pay.method = d.paym; render(); return; }
+    if (d.depm) { S.dep.method = d.depm; render(); return; }
+    if (d.status) {
+      var label = el.textContent;
+      if ((d.status === 'Cancelled' || d.status === 'No-show') && !window.confirm(label + ' ' + b.ref + '? Its time slot will be freed for other guests.')) return;
+      act({ action: 'staffSetStatus', ref: b.ref, status: d.status }, b.ref + ' is now ' + d.status + (d.status === 'Confirmed' && b.status === 'Pending' ? '. We emailed the guest.' : '.'));
+      return;
+    }
+    switch (d.act) {
+      case 'menu': S.menu = !S.menu; render(); break;
+      case 'logout': signOut(''); break;
+      case 'refresh': S.error = ''; loadAll(); break;
+      case 'close': S.open = ''; S.error = ''; S.msg = ''; render(); break;
+      case 'chpw': S.menu = false; S.chpw = true; S.error = ''; S.msg = ''; render(); break;
+      case 'chpwclose': S.chpw = false; S.error = ''; S.msg = ''; render(); break;
+      case 'pay':
+        if (!(Number(S.pay.amount) > 0)) { S.error = 'Please enter the amount paid.'; render(); return; }
+        act({ action: 'staffRecordPayment', ref: b.ref, amount: Number(S.pay.amount), method: S.pay.method, reference_no: S.pay.refno }, 'Payment of ' + peso(S.pay.amount) + ' recorded.')
+          .then(function () { var nb = S.data.bookings.filter(function (x) { return x.ref === S.open; })[0]; S.pay = { amount: nb && nb.balance > 0 ? String(nb.balance) : '', method: S.pay.method, refno: '' }; render(); });
+        break;
+      case 'payall':
+        if (!window.confirm('Record ' + peso(b.balance) + ' paid by ' + S.pay.method + ' for ' + b.ref + '?')) return;
+        act({ action: 'staffRecordPayment', ref: b.ref, amount: b.balance, method: S.pay.method, reference_no: S.pay.refno }, 'Balance marked as paid.');
+        break;
+      case 'exm': S.ext = Math.max(1, S.ext - 1); render(); break;
+      case 'exp': S.ext = Math.min(S.data.settings.max_extend_hours, S.ext + 1); render(); break;
+      case 'extend': act({ action: 'staffExtend', ref: b.ref, hours: S.ext }, 'Extended by ' + S.ext + ' hr' + (S.ext > 1 ? 's' : '') + '.').then(function () { S.ext = 1; render(); }); break;
+      case 'refund':
+        var amt = Math.max(0, b.deposit - (Number(S.dep.deduction) || 0));
+        if (!window.confirm('Mark ' + peso(amt) + ' deposit as returned by ' + S.dep.method + '?')) return;
+        act({ action: 'staffDeposit', ref: b.ref, refund: true, method: S.dep.method, deduction: Number(S.dep.deduction) || 0, reason: S.dep.reason }, 'Deposit returned. Booking completed.');
+        break;
+    }
+  });
+  app.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && (S.open || S.chpw)) { S.open = ''; S.chpw = false; S.error = ''; render(); }
+    if (e.key === 'Enter' && e.target.dataset && e.target.dataset.open) openBooking(e.target.dataset.open);
+  });
+  app.addEventListener('input', function (e) {
+    var id = e.target.id;
+    if (id === 'q') { S.q = e.target.value; render(); }
+    if (id === 'pa') S.pay.amount = e.target.value;
+    if (id === 'pr') S.pay.refno = e.target.value;
+    if (id === 'dr') S.dep.reason = e.target.value;
+    if (id === 'dd') { S.dep.deduction = e.target.value; var btn = app.querySelector('[data-act="refund"]'), b = S.data.bookings.filter(function (x) { return x.ref === S.open; })[0]; if (btn && b) btn.textContent = 'Mark ' + peso(Math.max(0, b.deposit - (Number(e.target.value) || 0))) + ' returned'; }
+  });
+  app.addEventListener('change', function (e) {
+    if (e.target.dataset.depf) act({ action: 'staffDeposit', ref: S.open, field: e.target.dataset.depf, value: e.target.checked });
+  });
+  app.addEventListener('submit', function (e) {
+    if (e.target.id !== 'cpf') return;
+    e.preventDefault();
+    var o = document.getElementById('cp0').value, n = document.getElementById('cp1').value;
+    if (n.length < 8) { S.error = 'The new password needs at least 8 characters.'; render(); return; }
+    S.busy = true; S.error = ''; render();
+    post({ action: 'staffChangePassword', old_password: o, new_password: n }).then(function (d) {
+      S.busy = false; S.token = d.token; S.remember = !!(function () { try { return localStorage.getItem('lo_staff'); } catch (x) { return ''; } })(); store('lo_staff', d.token);
+      S.msg = 'Password changed.'; render();
+    }).catch(fail);
+  });
+
+  // ---------- start ----------
+  if (!API) { app.innerHTML = '<div class="loading">The portal is not set up yet.</div>'; return; }
+  S.token = load('lo_staff');
+  if (S.token) loadAll(); else renderLogin();
+})();
+</script>
 </body>
 </html>
