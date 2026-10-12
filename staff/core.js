@@ -69,27 +69,52 @@ function fail(err) {
 }
 
 
-// ---------- cat avatars (from the design) ----------
-var CAT_BODY = '<path d="M11 38V22l4.5-11 6.5 8h4l6.5-8L37 22v16a4 4 0 0 1-4 4H15a4 4 0 0 1-4-4z" fill="#FFF6EA"/><path d="M14.2 17.5l1.6-3.8 2.6 3.3zM33.8 17.5l-1.6-3.8-2.6 3.3z" fill="#F2C9B8"/>';
+// ---------- cat profile pictures ----------
+// Each cat: id, background colour, fur, inner ear, face (S = line colour), extra (hat/crown on top), name hint.
+var FUR = { cream: ['#FFF6EA', '#F2C9B8', '#2E2621'], black: ['#3A322B', '#6B5A4C', '#FFF6EA'], ginger: ['#F4B26A', '#F7D3A8', '#2E2621'], gray: ['#CFC8BE', '#EBCFC4', '#2E2621'] };
+var EYES_HAPPY = '<path d="M16.5 30q2.6-3.2 5.2 0M26.3 30q2.6-3.2 5.2 0" fill="none" stroke="S" stroke-width="1.8" stroke-linecap="round"/>';
+var SMILE = '<path d="M21.3 34q2.7 2.8 5.4 0" fill="none" stroke="S" stroke-width="1.6" stroke-linecap="round"/>';
+var W_MOUTH = '<path d="M20.5 33.5q1.75 1.8 3.5 0q1.75 1.8 3.5 0" fill="none" stroke="S" stroke-width="1.5" stroke-linecap="round"/>';
+var BLUSH = '<circle cx="15.5" cy="33.2" r="1.8" fill="#F3AE98"/><circle cx="32.5" cy="33.2" r="1.8" fill="#F3AE98"/>';
+var DOTS = '<circle cx="19" cy="29" r="1.8" fill="S"/><circle cx="29" cy="29" r="1.8" fill="S"/>';
+var HEART = function (x, y) { return '<path d="M' + x + ' ' + (y + 2.6) + 'l-3.1-3.1a1.75 1.75 0 0 1 3.1-2.5a1.75 1.75 0 0 1 3.1 2.5z" fill="#E2586B"/>'; };
 var CATS = [
-  { key: /moralde|darling/i, color: '#7A5A2E', ty: 6.5, face: '<path d="M17 28q2.3 2 4.6 0M26.4 28q2.3 2 4.6 0" stroke="#2E2621" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M22 34q2 1.6 4 0" stroke="#2E2621" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="17" cy="32" r="1.6" fill="#F3AE98" opacity=".8"/><circle cx="31" cy="32" r="1.6" fill="#F3AE98" opacity=".8"/>',
+  { id: 'c1', key: /moralde|darling/i, label: 'Crown', bg: '#7A5A2E', fur: 'cream', ty: 6.5,
+    face: '<path d="M17 28q2.3 2 4.6 0M26.4 28q2.3 2 4.6 0" stroke="S" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M22 34q2 1.6 4 0" stroke="S" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="17" cy="32" r="1.6" fill="#F3AE98" opacity=".8"/><circle cx="31" cy="32" r="1.6" fill="#F3AE98" opacity=".8"/>',
     extra: '<path d="M15.5 14l1.8-8.5 3.9 4.6L24 3.2l2.8 6.9 3.9-4.6 1.8 8.5z" fill="#E9C46A" stroke="#FFF6EA" stroke-width="1.1" stroke-linejoin="round"/><circle cx="24" cy="3.4" r="1.4" fill="#FFF6EA"/><circle cx="17.3" cy="5.6" r="1.1" fill="#FFF6EA"/><circle cx="30.7" cy="5.6" r="1.1" fill="#FFF6EA"/>' },
-  { key: /marco/i, color: '#7FCFA8', face: '<path d="M16 25l5.5 1.6M32 25l-5.5 1.6" stroke="#2E2621" stroke-width="1.8" stroke-linecap="round"/><path d="M17 29.3h4.6M26.4 29.3h4.6" stroke="#2E2621" stroke-width="2.2" stroke-linecap="round"/><path d="M22 35.5h4" stroke="#2E2621" stroke-width="1.6" stroke-linecap="round"/>' },
-  { key: /valerie/i, color: '#F2A2B8', face: '<path d="M16.5 30q2.6-3.2 5.2 0M26.3 30q2.6-3.2 5.2 0" fill="none" stroke="#2E2621" stroke-width="1.8" stroke-linecap="round"/><path d="M21.3 34q2.7 2.8 5.4 0" fill="none" stroke="#2E2621" stroke-width="1.6" stroke-linecap="round"/><circle cx="15.5" cy="33.2" r="1.8" fill="#F3AE98"/><circle cx="32.5" cy="33.2" r="1.8" fill="#F3AE98"/><path d="M33 15.5l-5.5-3.6v7.2zM33 15.5l5.5-3.6v7.2z" fill="#E2586B"/><circle cx="33" cy="15.5" r="1.7" fill="#C23E52"/>' },
-  { key: /rhein/i, color: '#84CFE0', face: '<g transform="rotate(-9 24 30)"><circle cx="19" cy="29" r="3.3" fill="#2E2621"/><circle cx="29" cy="29" r="3.3" fill="#2E2621"/><circle cx="20.2" cy="27.8" r="1.1" fill="#fff"/><circle cx="30.2" cy="27.8" r="1.1" fill="#fff"/><circle cx="24" cy="35.3" r="1.3" fill="none" stroke="#2E2621" stroke-width="1.4"/><path d="M16 23.6q3-1.6 5.5 0M26.5 23.6q3-1.6 5.5 0" fill="none" stroke="#2E2621" stroke-width="1.3" stroke-linecap="round"/></g><text x="40.5" y="15" font-size="11" font-weight="700" fill="#1B1714" font-family="Jost, sans-serif">?</text>' },
-  { key: /irish/i, color: '#B29CE3', face: '<path d="M16.5 29.6q2.6 2 5.2 0" fill="none" stroke="#2E2621" stroke-width="1.8" stroke-linecap="round"/><circle cx="29" cy="29.2" r="2" fill="#2E2621"/><path d="M30.4 26.6l1.4-1.4" stroke="#2E2621" stroke-width="1.2" stroke-linecap="round"/><path d="M21.3 34q2.7 2.8 5.4 0" fill="none" stroke="#2E2621" stroke-width="1.6" stroke-linecap="round"/><g fill="#F7C6D9"><circle cx="11" cy="13" r="2"/><circle cx="14.6" cy="13" r="2"/><circle cx="12.8" cy="10" r="2"/><circle cx="12.8" cy="16" r="2"/></g><circle cx="12.8" cy="13" r="1.4" fill="#F2C14E"/>' }
+  { id: 'c2', key: /marco/i, label: 'Cool', bg: '#7FCFA8', fur: 'cream', face: '<path d="M16 25l5.5 1.6M32 25l-5.5 1.6" stroke="S" stroke-width="1.8" stroke-linecap="round"/><path d="M17 29.3h4.6M26.4 29.3h4.6" stroke="S" stroke-width="2.2" stroke-linecap="round"/><path d="M22 35.5h4" stroke="S" stroke-width="1.6" stroke-linecap="round"/>' },
+  { id: 'c3', key: /valerie/i, label: 'Bow', bg: '#F2A2B8', fur: 'cream', face: EYES_HAPPY + SMILE + BLUSH + '<path d="M33 15.5l-5.5-3.6v7.2zM33 15.5l5.5-3.6v7.2z" fill="#E2586B"/><circle cx="33" cy="15.5" r="1.7" fill="#C23E52"/>' },
+  { id: 'c4', key: /rhein/i, label: 'Curious', bg: '#84CFE0', fur: 'cream', face: '<g transform="rotate(-9 24 30)"><circle cx="19" cy="29" r="3.3" fill="S"/><circle cx="29" cy="29" r="3.3" fill="S"/><circle cx="20.2" cy="27.8" r="1.1" fill="#fff"/><circle cx="30.2" cy="27.8" r="1.1" fill="#fff"/><circle cx="24" cy="35.3" r="1.3" fill="none" stroke="S" stroke-width="1.4"/><path d="M16 23.6q3-1.6 5.5 0M26.5 23.6q3-1.6 5.5 0" fill="none" stroke="S" stroke-width="1.3" stroke-linecap="round"/></g><text x="40.5" y="15" font-size="11" font-weight="700" fill="#1B1714" font-family="Jost, sans-serif">?</text>' },
+  { id: 'c5', key: /irish/i, label: 'Wink', bg: '#B29CE3', fur: 'cream', face: '<path d="M16.5 29.6q2.6 2 5.2 0" fill="none" stroke="S" stroke-width="1.8" stroke-linecap="round"/><circle cx="29" cy="29.2" r="2" fill="S"/><path d="M30.4 26.6l1.4-1.4" stroke="S" stroke-width="1.2" stroke-linecap="round"/>' + SMILE + '<g fill="#F7C6D9"><circle cx="11" cy="13" r="2"/><circle cx="14.6" cy="13" r="2"/><circle cx="12.8" cy="10" r="2"/><circle cx="12.8" cy="16" r="2"/></g><circle cx="12.8" cy="13" r="1.4" fill="#F2C14E"/>' },
+  { id: 'c6', label: 'In love', bg: '#F59AAE', fur: 'cream', face: HEART(19, 27.5) + HEART(29, 27.5) + SMILE },
+  { id: 'c7', label: 'Starry', bg: '#F2D06B', fur: 'cream', face: '<text x="15.6" y="32" font-size="8" fill="#C9A13A">★</text><text x="25.6" y="32" font-size="8" fill="#C9A13A">★</text>' + W_MOUTH + BLUSH },
+  { id: 'c8', label: 'Silly', bg: '#FCD9B5', fur: 'ginger', face: '<path d="M16.5 28q2.6 2.2 5.2 0M26.3 28q2.6 2.2 5.2 0" fill="none" stroke="S" stroke-width="1.8" stroke-linecap="round"/><path d="M21 33.5q3 2.4 6 0" fill="none" stroke="S" stroke-width="1.5" stroke-linecap="round"/><path d="M22.8 34.6h2.4v2.4a1.2 1.2 0 0 1-2.4 0z" fill="#F2879A"/>' },
+  { id: 'c9', label: 'Shades', bg: '#6C8CD5', fur: 'cream', face: '<rect x="14.5" y="26" width="8.5" height="5.5" rx="2.5" fill="S"/><rect x="25" y="26" width="8.5" height="5.5" rx="2.5" fill="S"/><path d="M23 28h2" stroke="S" stroke-width="1.4"/><path d="M21.5 35q2.5 1.4 5-.6" fill="none" stroke="S" stroke-width="1.5" stroke-linecap="round"/>' },
+  { id: 'c10', label: 'Sleepy', bg: '#A7B6C9', fur: 'gray', face: '<path d="M16.5 29h5M26.5 29h5" stroke="S" stroke-width="1.8" stroke-linecap="round"/><circle cx="24" cy="34.5" r="1.4" fill="none" stroke="S" stroke-width="1.3"/>', extra: '<text x="35" y="13" font-size="8" font-weight="700" fill="#FFF6EA" font-family="Jost, sans-serif">z</text><text x="40" y="8" font-size="6" font-weight="700" fill="#FFF6EA" font-family="Jost, sans-serif">z</text>' },
+  { id: 'c11', label: 'Shy', bg: '#E3C4F0', fur: 'cream', face: DOTS + '<ellipse cx="15.5" cy="33" rx="2.6" ry="1.6" fill="#F59AAE"/><ellipse cx="32.5" cy="33" rx="2.6" ry="1.6" fill="#F59AAE"/><path d="M22.5 34q1.5 1 3 0" fill="none" stroke="S" stroke-width="1.4" stroke-linecap="round"/>' },
+  { id: 'c12', label: 'Grumpy', bg: '#C9A96E', fur: 'black', face: '<path d="M16 25.5l5 1.8M32 25.5l-5 1.8" stroke="S" stroke-width="1.8" stroke-linecap="round"/><circle cx="19" cy="29.5" r="1.6" fill="#E9C46A"/><circle cx="29" cy="29.5" r="1.6" fill="#E9C46A"/><path d="M21 35.5q3-2.4 6 0" fill="none" stroke="S" stroke-width="1.6" stroke-linecap="round"/>' },
+  { id: 'c13', label: 'Smart', bg: '#A9C49A', fur: 'cream', face: '<circle cx="19" cy="29" r="3.8" fill="none" stroke="S" stroke-width="1.4"/><circle cx="29" cy="29" r="3.8" fill="none" stroke="S" stroke-width="1.4"/><path d="M22.8 29h2.4" stroke="S" stroke-width="1.4"/><circle cx="19" cy="29" r="1.3" fill="S"/><circle cx="29" cy="29" r="1.3" fill="S"/><path d="M21.5 34.8q2.5 1.8 5 0" fill="none" stroke="S" stroke-width="1.5" stroke-linecap="round"/>' },
+  { id: 'c14', label: 'Surprised', bg: '#F08A7E', fur: 'cream', face: '<circle cx="19" cy="28.5" r="2" fill="S"/><circle cx="29" cy="28.5" r="2" fill="S"/><ellipse cx="24" cy="35" rx="1.8" ry="2.2" fill="S"/>' + BLUSH },
+  { id: 'c15', label: 'Party', bg: '#6FC2B5', fur: 'ginger', face: DOTS + W_MOUTH + BLUSH, extra: '<path d="M24 1.5l5.5 11h-11z" fill="#F2A2B8" stroke="#FFF6EA" stroke-width="1"/><circle cx="24" cy="1.8" r="1.7" fill="#F2C14E"/>' },
+  { id: 'c16', label: 'Sprout', bg: '#8E3B46', fur: 'black', face: EYES_HAPPY + W_MOUTH, extra: '<path d="M24 12.5v-5" stroke="#7FB98A" stroke-width="1.4"/><path d="M24 8.5q-4-3.2-6.5 0q3.2 2.6 6.5 0zM24 7.5q4-3.2 6.5 0q-3.2 2.6-6.5 0z" fill="#7FB98A"/>' },
+  { id: 'c17', label: 'Sweet', bg: '#F6B78C', fur: 'gray', face: EYES_HAPPY + SMILE + BLUSH },
+  { id: 'c18', label: 'Night owl', bg: '#3D5A80', fur: 'black', face: '<circle cx="19" cy="29" r="2.6" fill="#E9C46A"/><circle cx="29" cy="29" r="2.6" fill="#E9C46A"/><circle cx="19" cy="29" r="1" fill="#1B1714"/><circle cx="29" cy="29" r="1" fill="#1B1714"/>' + W_MOUTH, extra: '<path d="M38 6a5 5 0 1 0 4 8 4 4 0 1 1-4-8z" fill="#F2D06B"/>' }
 ];
-function catOf(name) {   // known staff get their own cat; anyone else gets one picked from their name
-  name = String(name || '');
-  for (var i = 0; i < CATS.length; i++) if (CATS[i].key.test(name)) return CATS[i];
+function catById(id) { for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i]; return null; }
+function catOf(p) {   // p = a person {name, avatar} or just a name
+  var name = typeof p === 'string' ? p : (p && p.name) || '', pick = p && typeof p === 'object' && catById(p.avatar);
+  if (pick) return pick;
+  for (var i = 0; i < 5; i++) if (CATS[i].key.test(name)) return CATS[i];
   var h = 0; for (var j = 0; j < name.length; j++) h = (h * 31 + name.charCodeAt(j)) % 997;
-  return CATS[1 + h % 4];
+  return CATS[5 + h % (CATS.length - 5)];
 }
-function catSvg(name, size) {
-  var c = catOf(name);
-  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="' + c.color + '"/>' +
-    '<g transform="translate(4 ' + (c.ty || 3.5) + ') scale(.84)">' + CAT_BODY + c.face + '</g>' + (c.extra || '') + '</svg>';
+function catDraw(c, size) {
+  var f = FUR[c.fur] || FUR.cream;
+  var body = '<path d="M11 38V22l4.5-11 6.5 8h4l6.5-8L37 22v16a4 4 0 0 1-4 4H15a4 4 0 0 1-4-4z" fill="' + f[0] + '"/><path d="M14.2 17.5l1.6-3.8 2.6 3.3zM33.8 17.5l-1.6-3.8-2.6 3.3z" fill="' + f[1] + '"/>';
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="' + c.bg + '"/>' +
+    '<g transform="translate(4 ' + (c.ty || 3.5) + ') scale(.84)">' + body + c.face.replace(/"S"/g, '"' + f[2] + '"') + '</g>' + (c.extra || '') + '</svg>';
 }
+function catSvg(p, size) { return catDraw(catOf(p), size); }
 function roleLabel(r) { return r === 'admin' ? 'Admin · Owner' : r === 'coadmin' ? 'Co-admin · Finance' : 'Operator'; }
 function savedMails() { try { return JSON.parse(localStorage.getItem('lo_mails') || '{}') || {}; } catch (e) { return {}; } }
 
@@ -101,6 +126,7 @@ function shortName(n) {   // "Ms. Darling Moralde" → "Ms. Moralde", "Valerie C
   return /^(ms|mr|mrs)\.?$/i.test(w[0]) && w.length > 1 ? w[0].replace(/\.?$/, '.') + ' ' + w[w.length - 1] : w[0];
 }
 function goLabel() { return S.busy ? 'Signing in…' : 'Sign in' + (L.pick ? ' as ' + shortName(L.pick) : ''); }
+function pickedStaff() { return (L.staff || []).filter(function (s) { return s.name === L.pick; })[0] || { name: L.pick }; }
 function pickAcct(name) { L.pick = name; var m = savedMails()[name]; L.email = m || ''; }
 function renderLogin() {
   if (L.staff === null) {
@@ -116,15 +142,15 @@ function renderLogin() {
   var isOp = L.role === 'operator';
   var accts = L.staff.filter(function (s) { return (s.role === 'operator') === isOp; });
   var tiles = accts.map(function (s) {
-    var on = L.pick === s.name, c = catOf(s.name).color;
+    var on = L.pick === s.name, c = catOf(s).bg;
     return '<button type="button" class="acct" data-acct="' + esc(s.name) + '" aria-pressed="' + on + '" style="' + (on ? 'background:' + c + '1f;border:2px solid ' + c + ';box-shadow:0 8px 18px ' + c + '33' : '') + '">' +
-      catSvg(s.name, isOp ? 52 : 44) + '<span>' + esc(s.name) + '</span></button>';
+      catSvg(s, isOp ? 52 : 44) + '<span>' + esc(s.name) + '</span></button>';
   }).join('');
   var ring = 'STAFF ONLY ✦ ON TIME ✦ SPOTLESS ✦ COZY STAYS ✦ STAFF ONLY ✦ ON TIME ✦ SPOTLESS ✦ COZY STAYS ✦ ';
   app.innerHTML = '<div class="login">' +
     '<section class="lside"><div class="in"><div class="ringbox">' +
     '<svg viewBox="0 0 600 600" aria-hidden="true"><defs><path id="circS" d="M300,300 m-270,0 a270,270 0 1,1 540,0 a270,270 0 1,1 -540,0"/></defs><text font-size="22" letter-spacing="4" fill="#C9A96E" font-family="Jost, sans-serif"><textPath href="#circS" textLength="1690" lengthAdjust="spacing">' + ring + '</textPath></text></svg>' +
-    '<div class="ph2"><div><img src="../assets/img/living-room-night.jpg" alt=""></div></div></div>' +
+    '<div class="ph2"><div>' + (L.pick ? '<span class="bigcat">' + catSvg(pickedStaff(), 220) + '</span>' : '<img src="../assets/img/living-room-night.jpg" alt="" onerror="this.onerror=null;this.src=\'../assets/img/logo.png\';this.style.objectFit=\'contain\'">') + '</div></div></div>' +
     '<div class="script">Luna\'s</div><div class="oasis">OASIS</div><div class="rule">Staff portal</div></div></section>' +
     '<section class="lmain"><form class="lcard" id="lf" novalidate>' +
     '<p class="wb">Welcome back</p><h1>Staff sign-in</h1>' +
@@ -148,7 +174,6 @@ function renderLogin() {
       if (first) pickAcct(first.name); else { L.pick = ''; L.email = ''; }
     } else { pickAcct(b.dataset.acct); S.loginErr = ''; }
     renderLogin();
-    var el = document.getElementById(L.email ? 'lp' : 'le'); if (el) el.focus();
   });
   f.addEventListener('input', function (e) {
     if (e.target.id === 'le') L.email = e.target.value;
@@ -170,7 +195,7 @@ function renderLogin() {
     });
   });
 }
-function signOut(msg) { S.token = ''; S.data = null; S.open = ''; S.menu = false; store('lo_staff', null); S.loginErr = msg || ''; renderLogin(); }
+function signOut(msg) { L.staff = null; S.avPick = false; S.token = ''; S.data = null; S.open = ''; S.menu = false; store('lo_staff', null); S.loginErr = msg || ''; renderLogin(); }
 function loadAll() {
   app.innerHTML = '<div class="loading"><div class="spin"></div>Loading bookings…</div>';
   post({ action: 'staffBookings' }).then(function (d) { S.data = d; S.me = d.me; render(); }).catch(function (err) {
@@ -271,19 +296,19 @@ function render() {
       return '<button type="button" class="' + cls + '" data-page="' + k + '"' + (S.page === k ? ' aria-current="page"' : '') + '>' + (cls === 'nav' ? '<i style="background:' + n[1] + '"></i>' : '') + esc(n[0]) + '</button>';
     }).join('');
   };
-  var c = catOf(me.name).color;
+  var c = catOf(me).bg;
   app.innerHTML = '<div class="shell">' +
     '<aside class="side"><a class="sbrand" href="./"><img src="../assets/img/logo.png" alt="Luna\'s Oasis"><span class="script">Luna\'s</span><span class="oasis">OASIS</span></a>' +
     '<div class="srole">' + portal + '</div>' + navBtns('nav') + '</aside>' +
     '<a class="topbar" href="./"><img src="../assets/img/logo.png" alt=""><span><span class="script">Luna\'s</span><span class="oasis">OASIS</span></span></a>' +
-    '<div class="pav"><button type="button" class="avbtn" data-act="menu" aria-label="Open profile menu" aria-expanded="' + S.menu + '" style="--c:' + c + '">' + catSvg(me.name, 46) + '</button>' +
+    '<div class="pav"><button type="button" class="avbtn" data-act="menu" aria-label="Open profile menu" aria-expanded="' + S.menu + '" style="--c:' + c + '">' + catSvg(me, 46) + '</button>' +
     (S.menu ? '<div class="menu"><div class="mh"><b>' + esc(me.name) + '</b><small style="color:var(--soft)">' + esc(me.email) + '</small><br><span class="badge" style="background:' + c + '">' + roleLabel(me.role) + '</span></div>' +
       '<div class="mpages"><div class="mk">Pages</div>' + navBtns('') + '</div>' +
-      '<button type="button" data-act="chpw">Change my password</button><a href="../" target="_blank" rel="noopener">View public site</a><button type="button" class="out" data-act="logout">Log out</button></div>' : '') +
+      '<button type="button" data-act="avatar">Change my picture</button><button type="button" data-act="chpw">Change my password</button><a href="../" target="_blank" rel="noopener">View public site</a><button type="button" class="out" data-act="logout">Log out</button></div>' : '') +
     '</div>' +
     '<main class="pmain"><div class="kick">' + kicker() + '</div>' +
     (S.page !== 'bookings' && PAGES[S.page] ? PAGES[S.page].html() : bookingsHtml()) +
-    '</main></div>' + (S.chpw ? chpwBox() : '');
+    '</main></div>' + (S.chpw ? chpwBox() : '') + (S.avPick ? avatarBox() : '');
   if (focus === 'q') { var q = document.getElementById('q'); if (q) { q.focus(); try { q.setSelectionRange(caret, caret); } catch (e) {} } }
 }
 
@@ -370,6 +395,16 @@ function detail() {
     '</div></section>';
 }
 
+function avatarBox() {
+  var mine = catOf(S.me).id;
+  return '<div class="shade" data-act="avclose"></div><aside class="drawer" role="dialog" aria-label="Change my picture" style="height:auto;bottom:auto;top:6%;right:50%;transform:translateX(50%);border-radius:22px;width:min(520px,94%);max-height:88vh">' +
+    '<div class="dh" style="border-radius:22px 22px 0 0"><div class="t">Change my picture</div><button type="button" data-act="avclose" aria-label="Close">✕</button></div>' +
+    '<div class="sec" style="border:0"><p class="hint" style="margin-top:0">Tap a cat. Everyone will see it on the sign-in page and next to your name.</p>' +
+    (S.error ? '<div class="err" role="alert">' + esc(S.error) + '</div>' : '') +
+    '<div class="catgrid">' + CATS.map(function (c) {
+      return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === mine) + '"' + (S.busy ? ' disabled' : '') + '>' + catDraw(c, 64) + '<span>' + esc(c.label) + '</span></button>';
+    }).join('') + '</div></div></aside>';
+}
 function chpwBox() {
   return '<div class="shade" data-act="chpwclose"></div><aside class="drawer" role="dialog" aria-label="Change my password" style="height:auto;bottom:auto;top:10%;right:50%;transform:translateX(50%);border-radius:22px;width:min(420px,94%)">' +
     '<div class="dh" style="border-radius:22px 22px 0 0"><div class="t">Change my password</div><button type="button" data-act="chpwclose" aria-label="Close">✕</button></div>' +
@@ -427,7 +462,7 @@ function fromPages(kind, e) {   // let page files handle their own buttons and f
 }
 app.addEventListener('click', function (e) {
   if (fromPages('click', e)) return;
-  var el = e.target.closest('[data-act],[data-tab],[data-open],[data-status],[data-id],[data-paym],[data-depm],[data-page]');
+  var el = e.target.closest('[data-act],[data-tab],[data-open],[data-status],[data-id],[data-paym],[data-depm],[data-page],[data-cat]');
   if (!el || el.disabled) { if (S.menu && !e.target.closest('.menu')) { S.menu = false; render(); } return; }
   var d = el.dataset, b = S.open && S.data.bookings.filter(function (x) { return x.ref === S.open; })[0];
   if (d.tab) { S.tab = d.tab; render(); return; }
@@ -440,6 +475,11 @@ app.addEventListener('click', function (e) {
   if (d.id) { viewId(S.open, +d.id); return; }
   if (d.paym) { S.pay.method = d.paym; render(); return; }
   if (d.depm) { S.dep.method = d.depm; render(); return; }
+  if (d.cat) {
+    S.busy = true; S.error = ''; render();
+    post({ action: 'staffSetAvatar', avatar: d.cat }).then(function (dd) { S.busy = false; S.data = dd; S.me = dd.me; S.avPick = false; render(); }).catch(fail);
+    return;
+  }
   if (d.status) {
     var label = el.textContent;
     if ((d.status === 'Cancelled' || d.status === 'No-show') && !window.confirm(label + ' ' + b.ref + '? Its time slot will be freed for other guests.')) return;
@@ -450,6 +490,8 @@ app.addEventListener('click', function (e) {
     case 'menu': S.menu = !S.menu; render(); break;
     case 'logout': signOut(''); break;
     case 'refresh': S.error = ''; loadAll(); break;
+    case 'avatar': S.menu = false; S.avPick = true; S.error = ''; render(); break;
+    case 'avclose': S.avPick = false; S.error = ''; render(); break;
     case 'chpw': S.menu = false; S.chpw = true; S.error = ''; S.msg = ''; render(); break;
     case 'chpwclose': S.chpw = false; S.error = ''; S.msg = ''; render(); break;
     case 'pay':
@@ -472,7 +514,7 @@ app.addEventListener('click', function (e) {
   }
 });
 app.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape' && (S.menu || S.chpw)) { S.menu = false; S.chpw = false; S.error = ''; render(); }
+  if (e.key === 'Escape' && (S.menu || S.chpw || S.avPick)) { S.menu = false; S.chpw = false; S.avPick = false; S.error = ''; render(); }
   if (e.key === 'Enter' && e.target.dataset && e.target.dataset.open) openBooking(e.target.dataset.open);
 });
 app.addEventListener('input', function (e) {

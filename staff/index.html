@@ -150,7 +150,11 @@ tr.sel td{background:#F1E8D8}
 .dkv div{background:#EDE3D1;border-radius:12px;padding:12px;font-weight:700;font-size:14px}
 .dkv small{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .dep{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#E6DCCB;color:#3A322B}
-.linkbtn{background:none;border:0;padding:0;font-weight:700;font-size:14px;color:var(--bronze);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.catgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:16px;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;color:var(--text);font-size:12.5px;font-weight:600}
+.catgrid button[aria-pressed="true"]{border:2px solid var(--bronze);background:#EDE3D1}
+.bigcat{display:block;width:100%;height:100%}
+.bigcat svg{width:100%;height:100%;display:block}.linkbtn{background:none;border:0;padding:0;font-weight:700;font-size:14px;color:var(--bronze);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .dl{display:flex;justify-content:space-between;gap:8px}
 .dl span{color:var(--muted)}
 .dl b{text-align:right}
