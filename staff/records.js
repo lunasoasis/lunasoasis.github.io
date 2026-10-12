@@ -128,7 +128,7 @@ function recordsHtml() {
 
   return '<div class="hello"><div><h1>Records &amp; earnings</h1><p>Every booking, every peso, every deposit — in one place.</p></div>' +
     '<button type="button" class="pill ghost sm" data-act="refresh">↻ Refresh</button></div>' +
-    (S.error && !S.open ? '<div class="err" role="alert" style="margin-bottom:12px">' + esc(S.error) + '</div>' : '') +
+    (S.error ? '<div class="err" role="alert" style="margin-bottom:12px">' + esc(S.error) + '</div>' : '') +
     (S.rmsg ? '<div class="okmsg" role="status" style="margin-bottom:12px">' + esc(S.rmsg) + '</div>' : '') +
     '<section class="panel"><div class="tools">' +
     '<div class="tabs"><button type="button" class="tab" data-rmode="month" aria-pressed="' + (mode === 'month') + '">Month</button><button type="button" class="tab" data-rmode="year" aria-pressed="' + (mode === 'year') + '">Year</button>' +

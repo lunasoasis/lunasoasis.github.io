@@ -39,7 +39,7 @@ function calendarHtml() {
   }).join('');
   return '<div class="hello"><div><h1>Calendar</h1><p>Every booking, time-in, time-out and extension. Tap a name to open the booking.</p></div>' +
     '<button type="button" class="pill ghost sm" data-act="refresh">↻ Refresh</button></div>' +
-    (S.error && !S.open ? '<div class="err" role="alert" style="margin-bottom:12px">' + esc(S.error) + '</div>' : '') +
+    (S.error ? '<div class="err" role="alert" style="margin-bottom:12px">' + esc(S.error) + '</div>' : '') +
     '<section class="panel">' +
     '<div class="calbar"><div class="calnav"><button type="button" class="round" data-cal="-1" aria-label="Previous month">‹</button>' +
     '<h2>' + MONTHS[m] + ' ' + y + '</h2><button type="button" class="round" data-cal="1" aria-label="Next month">›</button>' +

@@ -246,24 +246,73 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .strip span.clean{background:repeating-linear-gradient(45deg,#B9AE9F 0 3px,transparent 3px 6px);border-radius:0}
 
 /* checklist & upkeep */
-.ckrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding:7px 0;border-bottom:1px dashed var(--line)}
-.ckrow.bad .ckname{color:var(--bad)}
-.ckname{font-size:14px}
-.ckname small{color:var(--muted)}
-.ckseg{display:flex;gap:4px}
-.ckseg button{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text)}
-.ckseg button[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
-.ckseg button[data-cks="Missing"][aria-pressed="true"],.ckseg button[data-cks="Damaged"][aria-pressed="true"]{background:var(--bad);border-color:var(--bad)}
-.cknote{min-height:38px;font-size:14px;flex-basis:100%}
-.task{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px dashed var(--line)}
-.tcheck{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:14px}
-.tcheck input{width:20px;height:20px;margin-top:2px;accent-color:var(--ok);flex:none}
-.tcheck small{display:block;color:var(--muted);font-size:12.5px}
-.xbtn{background:none;border:1px solid var(--line);border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--muted);flex:none}
-details summary{list-style:none}
-details summary::-webkit-details-marker{display:none}
-details summary::after{content:' ▾';font-size:16px;color:var(--muted)}
+/* sign-in tiles: everyone shown */
+.acct span{white-space:normal;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+.acct small{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#7A6A55;margin-top:-4px}
+.acct.dim{opacity:.5}
 
+/* checklist & upkeep (design) */
+.ckhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px}
+.cksub{font-size:14px;color:var(--muted);margin-top:4px}
+.cksel{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
+.cksel select{background:var(--paper);border-color:#D3C4AA;max-width:100%}
+.ckprog{min-width:220px}
+.ckprog>div:first-child{display:flex;justify-content:space-between;gap:12px;font-size:13px;font-weight:700}
+.ckbar{height:10px;background:#E6DCCB;border-radius:999px;margin-top:6px;overflow:hidden}
+.ckbar i{display:block;height:100%;background:#4F7A63;border-radius:999px;transition:width .25s}
+.rtabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.rtab,.ubtn{min-height:44px;padding:0 18px;border-radius:999px;font-weight:700;font-size:14px;letter-spacing:.04em;cursor:pointer;background:var(--paper);color:#2E2621;border:1.5px solid #D3C4AA}
+.rtab[aria-pressed="true"]{background:#2E2621;color:#fff;border-color:#2E2621}
+.ckrow2{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #E6DCCB}
+.ckname2{flex:1 1 220px;min-width:0}
+.ckname2 b{display:block}
+.ckname2 span{font-size:13px;color:var(--muted)}
+.ckbtns{display:flex;gap:6px}
+.ckbtns button{min-height:40px;padding:0 16px;border-radius:999px;background:var(--paper);color:#3A322B;border:1.5px solid #D3C4AA;font-weight:700;font-size:14px;letter-spacing:.04em;cursor:pointer}
+.cknote2{flex:1 1 100%;background:var(--paper);border-color:#D3C4AA}
+.additem{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.additem #ai{flex:2 1 200px}
+.additem #aq{flex:1 1 120px}
+.ckfoot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.ubtn.dashed{border:1.5px dashed #4F7A63;color:#4F7A63}
+.ubtn.dark{background:#2E2621;color:#fff;border-color:#2E2621}
+.ubtn.green{background:#4F7A63;color:#fff;border-color:#4F7A63}
+.ubtn:disabled{opacity:.5;cursor:not-allowed}
+.uhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.ulegend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;margin-bottom:12px}
+.ulegend span{display:flex;align-items:center;gap:6px}
+.ulegend i{width:14px;height:14px;border-radius:4px}
+.udow,.ugrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.udow{text-align:center;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.ucell{min-height:84px;border-radius:12px;padding:8px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;cursor:pointer;color:#2E2621;background:#fff;border:1px solid #E2D6C2;min-width:0}
+.ucell.blank{border:0;background:transparent;cursor:default}
+.ucell.on{background:#F0E3C6;border:2px solid #1B1714}
+.ucell b{font-size:13px}
+.ucell span{display:flex;flex-wrap:wrap;gap:3px}
+.ucell i,.uentry i{font-style:normal;display:inline-block;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px}
+.xbtn{background:none;border:1px solid var(--line);border-radius:50%;width:28px;height:28px;cursor:pointer;color:var(--muted);flex:none;padding:0;font-size:12px}
+.ulog{display:flex;flex-direction:column;gap:14px}
+.uentry{border:1px solid #E2D6C2;border-radius:12px;padding:12px}
+.ue1{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.ue2{font-size:14px;margin-top:8px}
+.ue3{font-size:12px;color:var(--muted);margin-top:4px}
+.uform{border-top:1px solid #E2D6C2;padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.uform .inp{background:var(--paper);border-color:#D3C4AA}
+@media (max-width: 760px){
+  .ckprog{min-width:0;width:100%}
+  .cksub{font-size:13px}
+  .rtabs{gap:6px;margin:12px 0}
+  .rtab{min-height:36px;padding:0 12px;font-size:12px}
+  .ckrow2{gap:6px}
+  .ckbtns{flex:1 1 100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+  .ckbtns button{min-height:34px;padding:0 2px;font-size:11px;letter-spacing:0}
+  .ubtn{min-height:40px;padding:0 14px;font-size:12.5px}
+  .udow,.ugrid{gap:3px}
+  .udow{font-size:10px}
+  .ucell{min-height:46px;padding:4px;border-radius:8px;gap:3px}
+  .ucell b{font-size:11.5px;line-height:1.1}
+  .ucell i{font-size:0;width:7px;height:7px;padding:0;border-radius:50%}
+}
 /* records */
 .sel{min-height:36px;width:auto;padding:0 10px;font-size:14px}
 .xl{font-size:12px;color:var(--muted);align-self:center}
@@ -365,10 +414,10 @@ select.inp{appearance:auto}
 <body>
 <div id="app"><div class="loading"><div class="spin"></div>Loading…</div></div>
 
-<script src="../js/config.js"></script>
-<script src="core.js"></script>
-<script src="calendar.js"></script>
-<script src="records.js"></script>
-<script src="upkeep.js"></script>
+<script src="../js/config.js?v=4"></script>
+<script src="core.js?v=4"></script>
+<script src="calendar.js?v=4"></script>
+<script src="records.js?v=4"></script>
+<script src="upkeep.js?v=4"></script>
 </body>
 </html>

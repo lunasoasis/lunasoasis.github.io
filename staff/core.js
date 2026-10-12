@@ -119,7 +119,8 @@ function roleLabel(r) { return r === 'admin' ? 'Admin · Owner' : r === 'coadmin
 function savedMails() { try { return JSON.parse(localStorage.getItem('lo_mails') || '{}') || {}; } catch (e) { return {}; } }
 
 // ---------- sign-in ----------
-var L = { role: 'operator', pick: '', staff: null, email: '', pw: '', remember: true };
+// ---------- sign-in ----------
+var L = { role: '', pick: '', staff: null, email: '', pw: '', remember: true };
 function loginReady() { return /\S+@\S+/.test(L.email.trim()) && L.pw.length > 0; }
 function shortName(n) {   // "Ms. Darling Moralde" → "Ms. Moralde", "Valerie Cruz" → "Valerie"
   var w = String(n || '').trim().split(/\s+/);
@@ -127,24 +128,27 @@ function shortName(n) {   // "Ms. Darling Moralde" → "Ms. Moralde", "Valerie C
 }
 function goLabel() { return S.busy ? 'Signing in…' : 'Sign in' + (L.pick ? ' as ' + shortName(L.pick) : ''); }
 function pickedStaff() { return (L.staff || []).filter(function (s) { return s.name === L.pick; })[0] || { name: L.pick }; }
-function pickAcct(name) { L.pick = name; var m = savedMails()[name]; L.email = m || ''; }
+function pickAcct(name) {
+  L.pick = name; var m = savedMails()[name]; L.email = m || '';
+  var st = (L.staff || []).filter(function (s) { return s.name === name; })[0];
+  if (st) L.role = st.role === 'operator' ? 'operator' : 'admin';
+}
+function roleShort(r) { return r === 'admin' ? 'Admin' : r === 'coadmin' ? 'Co-admin' : 'Operator'; }
 function renderLogin() {
   if (L.staff === null) {
     L.staff = [];
     post({ action: 'staffPicker' }).then(function (list) {
       L.staff = list || [];
-      var mine = L.staff.filter(function (s) { return (s.role === 'operator') === (L.role === 'operator'); });
-      if (!mine.length && L.staff.length) L.role = L.staff[0].role === 'operator' ? 'operator' : 'admin';
-      if (!L.pick) { var first = L.staff.filter(function (s) { return (s.role === 'operator') === (L.role === 'operator'); })[0]; if (first) pickAcct(first.name); }
+      if (L.pick) pickAcct(L.pick);
       if (!S.token) renderLogin();
     }).catch(function () {});
   }
-  var isOp = L.role === 'operator';
-  var accts = L.staff.filter(function (s) { return (s.role === 'operator') === isOp; });
-  var tiles = accts.map(function (s) {
+  var isOp = L.role !== 'admin';
+  var tiles = L.staff.map(function (s) {   // everyone is shown; tapping a tile picks the role too
     var on = L.pick === s.name, c = catOf(s).bg;
-    return '<button type="button" class="acct" data-acct="' + esc(s.name) + '" aria-pressed="' + on + '" style="' + (on ? 'background:' + c + '1f;border:2px solid ' + c + ';box-shadow:0 8px 18px ' + c + '33' : '') + '">' +
-      catSvg(s, isOp ? 52 : 44) + '<span>' + esc(s.name) + '</span></button>';
+    var dim = L.role && !on && ((s.role === 'operator') !== (L.role === 'operator'));
+    return '<button type="button" class="acct' + (dim ? ' dim' : '') + '" data-acct="' + esc(s.name) + '" aria-pressed="' + on + '" style="' + (on ? 'background:' + c + '1f;border:2px solid ' + c + ';box-shadow:0 8px 18px ' + c + '33' : '') + '">' +
+      catSvg(s, 52) + '<span>' + esc(s.name) + '</span><small>' + roleShort(s.role) + '</small></button>';
   }).join('');
   var ring = 'STAFF ONLY ✦ ON TIME ✦ SPOTLESS ✦ COZY STAYS ✦ STAFF ONLY ✦ ON TIME ✦ SPOTLESS ✦ COZY STAYS ✦ ';
   app.innerHTML = '<div class="login">' +
@@ -155,8 +159,8 @@ function renderLogin() {
     '<section class="lmain"><form class="lcard" id="lf" novalidate>' +
     '<p class="wb">Welcome back</p><h1>Staff sign-in</h1>' +
     '<span class="lbl">I am signing in as</span>' +
-    '<div class="roles" role="group" aria-label="Role"><button type="button" data-lrole="admin" aria-pressed="' + !isOp + '">Admin</button><button type="button" data-lrole="operator" aria-pressed="' + isOp + '">Operator</button></div>' +
-    (tiles ? '<span class="lbl">Which ' + (isOp ? 'operator' : 'admin') + '?</span><div class="accts' + (isOp ? '' : ' adm') + '" role="group" aria-label="' + (isOp ? 'Operator' : 'Admin') + ' account">' + tiles + '</div>' : '') +
+    '<div class="roles" role="group" aria-label="Role"><button type="button" data-lrole="admin" aria-pressed="' + (L.role === 'admin') + '">Admin</button><button type="button" data-lrole="operator" aria-pressed="' + (L.role === 'operator') + '">Operator</button></div>' +
+    (tiles ? '<span class="lbl">Who\'s signing in?</span><div class="accts" role="group" aria-label="Staff">' + tiles + '</div>' : '') +
     '<label class="lbl" for="le">Gmail</label><input class="linp" id="le" type="email" autocomplete="username" inputmode="email" placeholder="yourname@gmail.com" value="' + esc(L.email) + '">' +
     '<label class="lbl" for="lp">Password</label><input class="linp" id="lp" type="password" autocomplete="current-password" placeholder="••••••••" value="' + esc(L.pw) + '">' +
     '<div class="lrow"><label><input type="checkbox" id="lr"' + (L.remember ? ' checked' : '') + '> Keep me signed in</label><span>Forgot password? ' + (isOp ? 'Ask the admin.' : 'Reset it from the Sheet menu.') + '</span></div>' +
@@ -169,9 +173,9 @@ function renderLogin() {
     var b = e.target.closest('[data-lrole],[data-acct]');
     if (!b) return;
     if (b.dataset.lrole) {
-      L.role = b.dataset.lrole; L.pw = ''; S.loginErr = '';
-      var first = L.staff.filter(function (s) { return (s.role === 'operator') === (L.role === 'operator'); })[0];
-      if (first) pickAcct(first.name); else { L.pick = ''; L.email = ''; }
+      L.role = b.dataset.lrole; S.loginErr = '';
+      var cur = L.staff.filter(function (s) { return s.name === L.pick; })[0];
+      if (cur && (cur.role === 'operator') !== (L.role === 'operator')) { L.pick = ''; L.email = ''; L.pw = ''; }
     } else { pickAcct(b.dataset.acct); S.loginErr = ''; }
     renderLogin();
   });
@@ -195,7 +199,7 @@ function renderLogin() {
     });
   });
 }
-function signOut(msg) { L.staff = null; S.avPick = false; S.token = ''; S.data = null; S.open = ''; S.menu = false; store('lo_staff', null); S.loginErr = msg || ''; renderLogin(); }
+function signOut(msg) { L.staff = null; L.role = ''; L.pick = ''; L.email = ''; L.pw = ''; S.avPick = false; S.token = ''; S.data = null; S.open = ''; S.menu = false; store('lo_staff', null); S.loginErr = msg || ''; renderLogin(); }
 function loadAll() {
   app.innerHTML = '<div class="loading"><div class="spin"></div>Loading bookings…</div>';
   post({ action: 'staffBookings' }).then(function (d) { S.data = d; S.me = d.me; render(); }).catch(function (err) {
