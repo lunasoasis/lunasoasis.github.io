@@ -644,13 +644,14 @@ button,input,select{font:inherit}
       '<ol class="after"><li>Save the ticket, then send it to us on Messenger.</li><li>Pay through GCash or bank transfer and send the receipt.</li><li>We confirm and send your Guest Access Form (GAF) to your Gmail.</li></ol>' +
       '<div class="actions" style="justify-content:center"><button type="button" class="pill ghost" data-act="again">Book another stay</button></div></div>';
     window.scrollTo(0, 0);
+    prepareTicketPng();
   }
 
   // ---------- ticket image ----------
+    // ---------- ticket image ----------
   function ticketPng() {
     var t = S.ticket, p = t.price, W = 1080;
-        if (p.stayover_total) line('Stay-over hours (' + p.stayover_hours + ' × ' + peso(cfg.extra_hour_rate) + ')', peso(p.stayover_total));
-        if (p.extras_total) line('Extra hours (' + p.extra_hours + ' × ' + peso(cfg.extra_hour_rate) + ')', peso(p.extras_total)); c = document.createElement('canvas');
+    var H = 1562 - (p.discount ? 0 : 62) - (p.stayover_total ? 0 : 62) - (p.extras_total ? 0 : 62), c = document.createElement('canvas');
     c.width = W; c.height = H;
     var g = c.getContext('2d');
     var serif = '"Cormorant Garamond", Georgia, serif', sans = 'Jost, Arial, sans-serif';
@@ -689,7 +690,8 @@ button,input,select{font:inherit}
         }
         line((t.nights ? t.nights + (t.nights > 1 ? ' nights' : ' night') + ' × ' + peso(p.unit_rate) : (t.hours - p.extra_hours) + '-hour stay') + ' (' + (t.pax <= 2 ? '2' : '4') + ' pax)', peso(p.stay_rate));
         if (p.discount) line((p.promo_pct ? p.promo_pct + '% OFF · ' : 'Promo · ') + p.promo_name, '−' + peso(p.discount), false, '#2F5A47');
-        if (p.extras_total) line('Extra hours (' + p.extra_hours + ')', peso(p.extras_total));
+        if (p.stayover_total) line('Stay-over hours (' + p.stayover_hours + ' × ' + peso(cfg.extra_hour_rate) + ')', peso(p.stayover_total));
+        if (p.extras_total) line('Extra hours (' + p.extra_hours + ' × ' + peso(cfg.extra_hour_rate) + ')', peso(p.extras_total));
         line('Security deposit (refundable)', peso(p.deposit));
         y += 10; line('TOTAL', peso(p.total), true);
         rr(110, y, W - 220, 120, 22, '#FFF4D6');
@@ -702,17 +704,47 @@ button,input,select{font:inherit}
       logo.src = 'assets/img/logo.png';
     });
   }
+  // The picture is made as soon as the ticket shows, so tapping "Save ticket"
+  // can open the phone's share sheet right away (iPhones block it if we wait).
+  var png = null;
+  function prepareTicketPng() {
+    png = null;
+    ticketPng().then(function (blob) { png = { blob: blob, url: URL.createObjectURL(blob) }; });
+  }
+  function showTicketPicture() {
+    var old = document.getElementById('tpic'); if (old) old.remove();
+    var name = 'Lunas-Oasis-' + S.ticket.ref + '.png';
+    var box = document.createElement('div');
+    box.id = 'tpic';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Your ticket picture');
+    box.style.cssText = 'position:fixed;inset:0;z-index:50;background:#0E0C0B;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;overflow:auto';
+    box.innerHTML = '<p style="margin:0;color:#F3ECE0;text-align:center;font-size:15px;max-width:340px">' +
+      (/iPhone|iPad|Android/i.test(navigator.userAgent) ? 'Press and hold the ticket, then tap <b>Save to Photos</b> (or <b>Download image</b>).' : 'Your ticket picture is ready.') + '</p>' +
+      '<img src="' + png.url + '" alt="Booking ticket ' + esc(S.ticket.ref) + '" style="max-width:min(420px,100%);max-height:70vh;border-radius:14px">' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">' +
+      '<a class="pill gold" href="' + png.url + '" download="' + name + '">Download</a>' +
+      '<button type="button" class="pill ghost" id="tpicclose">Close</button></div>';
+    document.body.appendChild(box);
+    document.getElementById('tpicclose').onclick = function () { box.remove(); };
+  }
   function saveTicket() {
-    ticketPng().then(function (blob) {
-      var name = 'Lunas-Oasis-' + S.ticket.ref + '.png';
-      var file = window.File ? new File([blob], name, { type: 'image/png' }) : null;
-      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        navigator.share({ files: [file], title: 'Luna\'s Oasis booking ' + S.ticket.ref }).catch(function () {});
-        return;
-      }
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
-      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    });
+    if (!png) { // still drawing: try again in a moment
+      setTimeout(function () { if (png) showTicketPicture(); }, 600);
+      return;
+    }
+    var name = 'Lunas-Oasis-' + S.ticket.ref + '.png';
+    var file = null;
+    try { file = new File([png.blob], name, { type: 'image/png' }); } catch (e) { file = null; }
+    var phone = /iPhone|iPad|Android|Mobi/i.test(navigator.userAgent);
+    if (phone && file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'Luna\'s Oasis booking ' + S.ticket.ref })
+        .catch(function (err) { if (!err || err.name !== 'AbortError') showTicketPicture(); });
+      return;
+    }
+    if (phone) { showTicketPicture(); return; }
+    var a = document.createElement('a'); a.href = png.url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
   }
 
   // ---------- ID files ----------
