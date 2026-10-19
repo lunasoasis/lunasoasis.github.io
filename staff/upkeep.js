@@ -131,13 +131,13 @@ function upkeepHtml() {
     checklistHtml() +
     '<div class="cols">' + upkeepCalHtml() + upkeepLogHtml() + '</div>';
 }
-function loadUp() {
-  post({ action: 'staffUpkeepData' }).then(function (d) { S.up = d; render(); }).catch(fail);
+function loadUp(fresh) {
+  post({ action: 'staffUpkeepData', fresh: !!fresh }).then(function (d) { S.up = d; saveCache('up', d); render(); }).catch(fail);
 }
 function upAct(body, msg) {
   S.busy = true; S.error = ''; S.umsg = ''; render();
-  return post(body).then(function (d) {
-    if (d.bookings) { S.data = d.bookings; delete d.bookings; }
+   return post(body, 0).then(function (d) {
+    if (d.bookings) { S.data = d.bookings; saveCache('bk', d.bookings); delete d.bookings; }
     S.up = d; S.busy = false; S.umsg = msg || ''; render();
   }).catch(fail);
 }
@@ -149,7 +149,7 @@ PAGES.upkeep = {
     if (!S.upDay) { S.upDay = todayKey(); S.uy = +S.upDay.slice(0, 4); S.um = +S.upDay.slice(5, 7) - 1; }
     if (!S.uform || S.uform.time === undefined) { var t = new Date(Date.now() + PH).toISOString().slice(11, 16); S.uform = { task: 'Cleaning', time: t, notes: '' }; }
     if (!S.addItem) S.addItem = { open: false, item: '', qty: '1' };
-    if (!S.up) loadUp();
+        if (!S.up) { S.up = readCache('up'); loadUp(); }   // saved copy first, then the latest
   },
   click: function (e) {
     var el = e.target.closest('[data-ck],[data-room],[data-uday],[data-umon],[data-updel],[data-itdel],[data-act="uprefresh"],[data-act="cksave"],[data-act="upadd"],[data-act="itadd"],[data-act="itopen"],[data-act="itcancel"],[data-act="itedit"]');
@@ -162,7 +162,7 @@ PAGES.upkeep = {
     if (d.updel) { if (window.confirm('Delete this upkeep entry?')) upAct({ action: 'staffUpkeep', op: 'delete', id: d.updel }, 'Entry deleted.'); return true; }
     if (d.itdel) { if (window.confirm('Remove this item from the checklist?')) upAct({ action: 'staffChecklistItem', op: 'remove', item_id: d.itdel }, 'Item removed.'); return true; }
     switch (d.act) {
-      case 'uprefresh': S.up = null; S.ck = {}; loadAll(); loadUp(); break;
+            case 'uprefresh': S.ck = {}; loadAll(true); loadUp(true); break;
       case 'itopen': S.addItem = { open: true, item: '', qty: '1' }; render(); break;
       case 'itcancel': S.addItem.open = false; render(); break;
       case 'itedit': S.editItems = !S.editItems; render(); break;

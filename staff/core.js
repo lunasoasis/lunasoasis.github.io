@@ -46,19 +46,33 @@ function staffName(email) {
   return s ? s.name : String(email || '').split('@')[0];
 }
 
-function post(body) {
+// Sends a request to the backend. Waits up to 35 seconds, and tries once more if the
+// phone's connection drops (mobile data often does). Server messages are never retried.
+function post(body, tries) {
   body.token = S.token;
-  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
-    .then(function (r) { return r.json(); })
+  tries = tries == null ? 1 : tries;
+  var ctl = window.AbortController ? new AbortController() : null;
+  var timer = ctl ? setTimeout(function () { ctl.abort(); }, 35000) : null;
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
+    .then(function (r) { return r.json(); }, function (err) {
+      if (timer) clearTimeout(timer);
+      if (tries > 0) return new Promise(function (ok) { setTimeout(ok, 1200); }).then(function () { return post(body, tries - 1); }).then(function (d) { return { ok: true, data: d }; });
+      var e = new Error(err && err.name === 'AbortError' ? 'The server took too long to answer. Please try again.' : 'Failed to fetch'); throw e;
+    })
     .then(function (j) {
+      if (timer) clearTimeout(timer);
       if (!j.ok) { var e = new Error(j.error || 'Something went wrong.'); e.auth = j.auth; throw e; }
       return j.data;
     });
 }
+// Last data seen, kept on this phone so pages open instantly next time.
+function saveCache(k, v) { try { (load('lo_staff') && localStorage.getItem('lo_staff') ? localStorage : sessionStorage).setItem('lo_c_' + k, JSON.stringify(v)); } catch (e) {} }
+function readCache(k) { try { var t = localStorage.getItem('lo_c_' + k) || sessionStorage.getItem('lo_c_' + k); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
+function clearCache() { ['bk', 'up', 'an'].forEach(function (k) { try { localStorage.removeItem('lo_c_' + k); sessionStorage.removeItem('lo_c_' + k); } catch (e) {} }); }
 function act(body, okMsg) {   // staff action that returns fresh bookings
   S.busy = true; S.error = ''; S.msg = ''; render();
-  return post(body).then(function (d) {
-    S.busy = false; S.data = d; S.me = d.me; S.msg = okMsg || ''; render();
+  return post(body, 0).then(function (d) {
+    S.busy = false; S.data = d; S.me = d.me; saveCache('bk', d); S.msg = okMsg || ''; render();
   }).catch(fail);
 }
 function fail(err) {
@@ -199,12 +213,34 @@ function renderLogin() {
     });
   });
 }
-function signOut(msg) { L.staff = null; L.role = ''; L.pick = ''; L.email = ''; L.pw = ''; S.avPick = false; S.token = ''; S.data = null; S.open = ''; S.menu = false; store('lo_staff', null); S.loginErr = msg || ''; renderLogin(); }
-function loadAll() {
-  app.innerHTML = '<div class="loading"><div class="spin"></div>Loading bookings…</div>';
-  post({ action: 'staffBookings' }).then(function (d) { S.data = d; S.me = d.me; render(); }).catch(function (err) {
-    if (err.auth) signOut(''); else { app.innerHTML = '<div class="loading">Could not load bookings. <a href="">Try again</a></div>'; }
+function signOut(msg) { L.staff = null; L.role = ''; L.pick = ''; L.email = ''; L.pw = ''; S.avPick = false; S.token = ''; S.data = null; S.up = null; S.an = null; clearCache(); S.open = ''; S.menu = false; store('lo_staff', null); S.loginErr = msg || ''; renderLogin(); }
+function loadAll(fresh) {
+  var cached = !S.data && readCache('bk');
+  if (cached) { S.data = cached; S.me = cached.me; S.stale = true; render(); }   // show the last data right away…
+  else if (!S.data) app.innerHTML = '<div class="loading"><div class="spin"></div>Loading bookings…</div>';
+  else { S.stale = true; render(); }
+  post({ action: 'staffBookings', fresh: !!fresh }).then(function (d) {      // …then swap in the fresh data
+    S.data = d; S.me = d.me; S.stale = false; S.offline = false; saveCache('bk', d); render();
+    prefetch();
+  }).catch(function (err) {
+    if (err.auth) { signOut('Please sign in again.'); return; }
+    S.stale = false;
+    var msg = err.message && err.message !== 'Failed to fetch' ? err.message : 'Could not reach the server. Check your internet and try again.';
+    if (S.data) { S.offline = msg; render(); return; }
+    app.innerHTML = '<div class="loading"><p style="color:var(--cream);margin:0 0 14px">' + esc(msg) + '</p><button type="button" class="pill gold" id="retry">Try again</button></div>';
+    document.getElementById('retry').onclick = function () { loadAll(true); };
   });
+}
+// Load the other pages quietly in the background so they open instantly.
+function prefetch() {
+  if (PAGES.upkeep && !S.upLoading) {
+    S.upLoading = true;
+    post({ action: 'staffUpkeepData' }).then(function (d) { S.up = d; S.upLoading = false; saveCache('up', d); if (S.page === 'upkeep') render(); }).catch(function () { S.upLoading = false; });
+  }
+  if (PAGES.announce && !S.anLoading) {
+    S.anLoading = true;
+    post({ action: 'staffAnnounceData' }).then(function (d) { S.an = d; S.anLoading = false; saveCache('an', d); if (S.page === 'announce') render(); }).catch(function () { S.anLoading = false; });
+  }
 }
 
 // ---------- main page ----------
@@ -307,10 +343,11 @@ function render() {
     '<a class="topbar" href="./"><img src="../assets/img/logo.png" alt=""><span><span class="script">Luna\'s</span><span class="oasis">OASIS</span></span></a>' +
     '<div class="pav"><button type="button" class="avbtn" data-act="menu" aria-label="Open profile menu" aria-expanded="' + S.menu + '" style="--c:' + c + '">' + catSvg(me, 46) + '</button>' +
     (S.menu ? '<div class="menu"><div class="mh"><b>' + esc(me.name) + '</b><small style="color:var(--soft)">' + esc(me.email) + '</small><br><span class="badge" style="background:' + c + '">' + roleLabel(me.role) + '</span></div>' +
-      '<div class="mpages"><div class="mk">Pages</div>' + navBtns('') + '</div>' +
-      '<button type="button" data-act="avatar">Change my picture</button><button type="button" data-act="chpw">Change my password</button><a href="../" target="_blank" rel="noopener">View public site</a><button type="button" class="out" data-act="logout">Log out</button></div>' : '') +
+    '<div class="mpages"><div class="mk">Pages</div>' + navBtns('') + '</div>' +
+    '<button type="button" data-act="avatar">Change my picture</button><button type="button" data-act="chpw">Change my password</button><a href="../" target="_blank" rel="noopener">View public site</a><button type="button" class="out" data-act="logout">Log out</button></div>' : '') +
     '</div>' +
-    '<main class="pmain"><div class="kick">' + kicker() + '</div>' +
+    '<main class="pmain"><div class="kick">' + kicker() + (S.stale ? ' <span class="upd">· Updating…</span>' : '') + '</div>' +
+    (S.offline ? '<div class="err" role="alert" style="margin:0">Showing the last saved data. ' + esc(S.offline) + ' <button type="button" class="linkbtn" data-act="refresh">Try again</button></div>' : '') +
     (S.page !== 'bookings' && PAGES[S.page] ? PAGES[S.page].html() : bookingsHtml()) +
     '</main></div>' + (S.chpw ? chpwBox() : '') + (S.avPick ? avatarBox() : '');
   if (focus === 'q') { var q = document.getElementById('q'); if (q) { q.focus(); try { q.setSelectionRange(caret, caret); } catch (e) {} } }
@@ -493,7 +530,7 @@ app.addEventListener('click', function (e) {
   switch (d.act) {
     case 'menu': S.menu = !S.menu; render(); break;
     case 'logout': signOut(''); break;
-    case 'refresh': S.error = ''; loadAll(); break;
+        case 'refresh': S.error = ''; loadAll(true); break;
     case 'avatar': S.menu = false; S.avPick = true; S.error = ''; render(); break;
     case 'avclose': S.avPick = false; S.error = ''; render(); break;
     case 'chpw': S.menu = false; S.chpw = true; S.error = ''; S.msg = ''; render(); break;

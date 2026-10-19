@@ -64,10 +64,10 @@ function announceHtml() {
     '</div>';
 }
 
-function loadAn() { post({ action: 'staffAnnounceData' }).then(function (d) { S.an = d; render(); }).catch(fail); }
+function loadAn(fresh) { post({ action: 'staffAnnounceData', fresh: !!fresh }).then(function (d) { S.an = d; saveCache('an', d); render(); }).catch(fail); }
 function anAct(body, after) {
   S.busy = true; S.error = ''; render();
-  return post(body).then(function (d) { S.an = d; S.busy = false; if (after) after(); render(); }).catch(fail);
+  return post(body, 0).then(function (d) { S.an = d; saveCache('an', d); S.busy = false; if (after) after(); render(); }).catch(fail);
 }
 function anSend(id) {
   var t = (S.anDraft[id] || '').trim();
@@ -83,6 +83,7 @@ PAGES.announce = {
   enter: function () {
     S.error = '';
     if (!S.anForm) { S.anForm = { title: '', body: '', pin: false }; S.anSort = 'top'; S.anOpen = {}; S.anDraft = {}; }
+    if (!S.an) S.an = readCache('an');   // saved copy first, then the latest
     loadAn();
   },
   click: function (e) {
@@ -99,7 +100,7 @@ PAGES.announce = {
     }
     if (d.andel) { if (window.confirm('Delete this announcement?')) anAct({ action: 'staffAnnounce', op: 'delete', id: d.andel }); return true; }
     if (d.ancdel) { if (window.confirm('Delete this comment?')) anAct({ action: 'staffAnnounce', op: 'uncomment', comment_id: d.ancdel }); return true; }
-    if (d.act === 'anrefresh') { S.an = null; render(); loadAn(); return true; }
+    if (d.act === 'anrefresh') { loadAn(true); return true; }
     if (d.act === 'anpost') {
       if (S.anForm.title.trim().length < 2) { S.error = 'Please type a title.'; render(); return true; }
       anAct({ action: 'staffAnnounce', op: 'post', title: S.anForm.title, body: S.anForm.body, pin: S.anForm.pin }, function () { S.anForm = { title: '', body: '', pin: false }; S.anSort = 'new'; });
