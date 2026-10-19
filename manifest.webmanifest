@@ -1,0 +1,14 @@
+{
+  "name": "Luna's Oasis",
+  "short_name": "Luna's Oasis",
+  "description": "Cozy staycation condo at The Residences at Commonwealth, Quezon City.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#12100E",
+  "theme_color": "#12100E",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
