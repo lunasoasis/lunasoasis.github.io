@@ -397,7 +397,8 @@ function detail() {
     (statusBtns.length ? '<div><div class="acts">' + statusBtns.map(function (x) { return '<button type="button" class="pill ' + x[2] + ' sm" data-status="' + x[0] + '"' + (S.busy ? ' disabled' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
       (b.status === 'Pending' ? '<p class="hint' + (b.paid_total < minPay ? ' warn' : '') + '">' + (b.paid_total < minPay ? 'Paid ' + peso(b.paid_total) + ' of the ' + peso(minPay) + ' needed to confirm (' + (S.data.settings.min_payment_pct || 50) + '% + deposit).' : 'Enough is paid to confirm.') + ' Confirming emails the guest.</p>' : '') + '</div>' : '') +
     '<div><div class="k2" style="margin-bottom:6px">Guests &amp; IDs</div><div class="glist">' + gaps + '</div>' +
-    '<div style="font-size:13px;color:var(--muted);margin-top:6px">Gmail: <a href="mailto:' + esc(b.guest_email) + '" style="color:var(--bronze)">' + esc(b.guest_email) + '</a></div></div>' +
+    '<div style="font-size:13px;color:var(--muted);margin-top:6px">Gmail: <a href="mailto:' + esc(b.guest_email) + '" style="color:var(--bronze)">' + esc(b.guest_email) + '</a></div>' +
+    (typeof gafButton === 'function' && active(b) ? gafButton(b) : '') + '</div>' +
     '<div class="dkv"><div><small>Time-in</small>' + whenS(b.check_in) + '</div><div><small>Time-out</small>' + whenS(b.check_out) + '</div></div>' +
     '<div style="font-size:13px;color:var(--muted);margin-top:-6px">' + esc(stayLabel) + ' · ' + hours(b) + ' hrs · booked ' + when(b.created_at) + '</div>' +
     (canEdit ? '<div class="box"><h3>Extend stay</h3>' +
