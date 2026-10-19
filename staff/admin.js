@@ -1,41 +1,32 @@
 /* Luna's Oasis — staff portal: admin screens opened from the profile (cat) menu.
+   · Users          (staff accounts & guests)
    · Payments by method
-   · Activity & who's online (live) */
+   · Recent activity (everything staff do, with sign-in and sign-out times) */
 'use strict';
 
-(function () {   // styles for these two screens
+(function () {   // styles for these screens
   var css =
     '.adtop{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}' +
     '.mnav{display:flex;align-items:center;gap:8px}.mnav b{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;min-width:170px;text-align:center}' +
     '.pmrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;margin-bottom:14px}' +
     '.pmrow .ckbar{grid-column:1 / -1;margin:0}.pmrow small{color:var(--muted);font-size:12.5px}' +
-    '.who{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}' +
-    '.whoc{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--paper);min-width:0}' +
-    '.whoc.on{border-color:#4F7A63;box-shadow:0 0 0 1px #4F7A63 inset}' +
-    '.whoc .av{position:relative;flex:none;line-height:0}.whoc .av i{position:absolute;right:0;bottom:0;width:13px;height:13px;border-radius:50%;border:2px solid var(--paper);background:#B9AE9F}' +
-    '.whoc.on .av i{background:#3FA36B;animation:livep 1.6s ease-in-out infinite}' +
-    '@keyframes livep{50%{box-shadow:0 0 0 5px rgba(63,163,107,.18)}}' +
-    '.whoc b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.whoc span{display:block;font-size:13px;color:var(--muted)}.whoc .st2{color:#2F5A47;font-weight:600}' +
     '.daygrp{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--bronze);margin:16px 0 2px}' +
     '.afil{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 4px}.afil select{width:auto;min-height:40px;background:var(--paper)}' +
-    '.kick::after{content:"  ● LIVE";color:#7FCFA8;letter-spacing:.14em}' +
-    '.pill[data-act$="refresh"]{display:none}' +
-    '@media (max-width:760px){.mnav b{font-size:20px;min-width:0}.whoc{padding:10px}.afil .sortb{min-height:36px;padding:0 12px;font-size:12.5px}}';
+    '.inout{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:#E8DCC4;color:#2F5A47;margin-right:6px}.inout.out{background:#EDE3D1;color:#7A5A2E}' +
+    '@media (max-width:760px){.mnav b{font-size:20px;min-width:0}.afil .sortb{min-height:36px;padding:0 12px;font-size:12.5px}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 })();
+
+if (NAV.overview) NAV.overview[0] = 'Overview · reviews';   // users now have their own screen
 
 // Extra buttons in the cat menu (core.js calls this).
 function menuExtra() {
   if (!isFinance()) return '';
-  return '<div class="mk">Admin</div>' +
-    '<button type="button" data-page="payments"' + (S.page === 'payments' ? ' aria-current="page"' : '') + '>Payments by method</button>' +
-    '<button type="button" data-page="activity"' + (S.page === 'activity' ? ' aria-current="page"' : '') + '>Activity &amp; who\'s online</button>';
+  var b = function (k, t) { return '<button type="button" data-page="' + k + '"' + (S.page === k ? ' aria-current="page"' : '') + '>' + t + '</button>'; };
+  return '<div class="mk">Admin</div>' + b('users', 'Users') + b('payments', 'Payments by method') + b('activity', 'Recent activity');
 }
 
-function adName(email) {
-  var p = (S.pres || []).filter(function (x) { return x.email === email; })[0];
-  return p ? p.name : staffName(email);
-}
+function adName(email) { return staffName(email); }
 function adTime(v) {   // "1:05 PM"
   if (!v) return '';
   var h = +v.slice(11, 13), m = v.slice(14, 16);
@@ -49,6 +40,21 @@ function adLen(a, b) {
   var mins = Math.max(1, Math.round((ms(b) - ms(a)) / 60000));
   return mins < 60 ? mins + ' min' : Math.floor(mins / 60) + ' hr' + (mins >= 120 ? 's' : '') + (mins % 60 ? ' ' + mins % 60 + ' min' : '');
 }
+
+// ===================== Users =====================
+PAGES.users = {
+  show: function () { return false; }, menu: isFinance,
+  html: function () {
+    return '<div class="hello"><div><h1>Users</h1><p>Staff accounts and the guests who booked.</p></div><button type="button" class="pill ghost sm" data-act="ovrefresh">↻ Refresh</button></div>' +
+      (S.error ? '<div class="err" role="alert">' + esc(S.error) + '</div>' : '') + (S.ovMsg ? '<div class="okmsg" role="status">' + esc(S.ovMsg) + '</div>' : '') +
+      (S.ov ? ovUsersHtml() : '<div class="loading"><div class="spin"></div>Loading users…</div>');
+  },
+  enter: function () {
+    S.error = ''; S.ovMsg = '';
+    if (!S.ovUserTab) { S.ovUserTab = 'staff'; S.ovRevTab = 'pending'; S.ovRev = { open: false, guest: '', ref: '', rating: 5, text: '' }; }
+    loadOv();
+  }
+};
 
 // ===================== Payments by method =====================
 function pmList() {
@@ -120,79 +126,73 @@ PAGES.payments = {
   }
 };
 
-// ===================== Activity & who's online =====================
-var AD_KINDS = [['all', 'Everything'], ['bookings', 'Bookings'], ['payments', 'Payments'], ['unit', 'Checklist & upkeep'], ['gaf', 'GAF letters'], ['people', 'Users & reviews'], ['signin', 'Sign-ins']];
+// ===================== Recent activity =====================
+var AD_KINDS = [['all', 'Everything'], ['signin', 'Time in & out'], ['bookings', 'Bookings'], ['payments', 'Payments'], ['unit', 'Checklist & upkeep'], ['gaf', 'GAF letters'], ['people', 'Users & reviews']];
 function adKind(a) {
-  return { createBooking: 'bookings', setStatus: 'bookings', extend: 'bookings', addPast: 'bookings', recordPayment: 'payments', depositRefund: 'payments',
+  return { staffLogin: 'signin', staffLogout: 'signin', createBooking: 'bookings', setStatus: 'bookings', extend: 'bookings', addPast: 'bookings', recordPayment: 'payments', depositRefund: 'payments',
     checklist: 'unit', upkeep: 'unit', gaf: 'gaf', staff: 'people', review: 'people' }[a.action] || 'other';
 }
 function adText(a) {
+  if (a.action === 'staffLogin') return 'signed in' + (a.details === 'kept signed in' ? ' (kept signed in)' : '');
+  if (a.action === 'staffLogout') return 'signed out';
   if (a.action === 'gaf') return a.details === 'signature changed' ? 'changed the GAF signature' : 'sent the GAF for ' + a.ref + (a.details ? ' · ' + a.details.replace(/^sent /, '') : '');
   return typeof ovActivity === 'function' ? ovActivity(a) : a.action + ' ' + a.ref;
 }
+function adShifts(list) {   // pairs each sign-in with the sign-out that follows it
+  var asc = list.filter(function (a) { return a.action === 'staffLogin' || a.action === 'staffLogout'; }).slice().reverse(), open = {}, out = [];
+  asc.forEach(function (a) {
+    if (a.action === 'staffLogin') {
+      if (open[a.email]) out.push(open[a.email]);
+      open[a.email] = { email: a.email, inAt: a.at, outAt: '' };
+    } else if (open[a.email]) { open[a.email].outAt = a.at; out.push(open[a.email]); delete open[a.email]; }
+    else out.push({ email: a.email, inAt: '', outAt: a.at });
+  });
+  Object.keys(open).forEach(function (k) { out.push(open[k]); });
+  return out.sort(function (x, y) { return (y.inAt || y.outAt) < (x.inAt || x.outAt) ? -1 : 1; });
+}
 function activityHtml() {
-  var F = S.af, pres = S.pres;
-  var online = pres ? pres.filter(function (p) { return p.online; }).length : 0;
-  var who = pres ? pres.slice().sort(function (a, b) { return (b.online - a.online) || (a.name < b.name ? -1 : 1); }).map(function (p) {
-    var line = p.online ? '<span class="st2">● Online now</span><span>since ' + adTime(p.since) + (adDay(p.since) !== 'Today' ? ' ' + adDay(p.since) : '') + (p.dev ? ' · on ' + esc(p.dev.toLowerCase()) : '') + '</span>'
-      : '<span>Offline</span><span>' + (p.last_off ? 'last seen ' + adDay(p.last_off) + ', ' + adTime(p.last_off) + ' · ' + (p.last_how === 'Signed out' ? 'logged out' : 'closed the portal') : 'not seen yet') + '</span>';
-    return '<div class="whoc' + (p.online ? ' on' : '') + '"><span class="av">' + catSvg(p, 44) + '<i></i></span><div style="min-width:0"><b>' + esc(p.name) + '</b>' + line + '</div></div>';
-  }).join('') : '<div class="loading" style="padding:20px"><div class="spin"></div>Checking who\'s online…</div>';
-
-  var A = S.act;
-  var people = pres ? pres.map(function (p) { return p.email; }) : [];
-  var events = [];
-  if (A) {
-    A.activity.forEach(function (a) { events.push({ at: a.at, email: a.email, kind: adKind(a), guest: a.action === 'createBooking', text: adText(a) }); });
-    A.sessions.forEach(function (s) {
-      events.push({ at: s.off, email: s.email, kind: 'signin', text: (s.how === 'Signed out' ? 'logged out' : 'went offline (closed the portal)') + ' · was online ' + adLen(s.on, s.off) + (s.dev ? ' on ' + s.dev.toLowerCase() : '') });
-      events.push({ at: s.on, email: s.email, kind: 'signin', text: 'came online' + (s.dev ? ' on ' + s.dev.toLowerCase() : '') });
-    });
-    (pres || []).forEach(function (p) { if (p.online) events.push({ at: p.since, email: p.email, kind: 'signin', text: 'came online' + (p.dev ? ' on ' + p.dev.toLowerCase() : '') + ' · still online' }); });
-  }
+  var F = S.af, A = S.act;
+  var people = (S.data.staff || []).map(function (s) { return s.email; });
   var cut = F.days ? Date.now() - F.days * 24 * HOUR : 0;
-  if (F.days === 1) { var t0 = new Date(Date.now() + PH).toISOString().slice(0, 10); cut = ms(t0 + 'T00:00'); }
-  var shown = events.filter(function (ev) {
-    return ev.at && (F.kind === 'all' || ev.kind === F.kind) && (F.who === 'all' || ev.email === F.who) && (!cut || ms(ev.at) >= cut);
-  }).sort(function (a, b) { return a.at < b.at ? 1 : -1; }).slice(0, 250);
-  var lastDay = '', log = shown.map(function (ev) {
-    var day = adDay(ev.at), head = day !== lastDay ? '<div class="daygrp">' + esc(day) + '</div>' : '';
-    lastDay = day;
-    return head + '<div class="actrow"><span>' + adTime(ev.at) + '</span><span><b>' + esc(ev.guest ? 'Guest' : adName(ev.email)) + '</b> ' + esc(ev.text) + '</span></div>';
-  }).join('');
-
-  var sess = A ? (pres || []).filter(function (p) { return p.online; }).map(function (p) {
-    return '<tr><td><b>' + esc(p.name) + '</b></td><td>' + whenS(p.since) + '</td><td><span class="ovst">Still online</span></td><td>' + adLen(p.since, new Date(Date.now() + PH).toISOString().slice(0, 16)) + '</td><td>' + esc(p.dev || '—') + '</td></tr>';
-  }).concat(A.sessions.filter(function (s) { return F.who === 'all' || s.email === F.who; }).slice(0, 60).map(function (s) {
-    return '<tr><td><b>' + esc(adName(s.email)) + '</b></td><td>' + whenS(s.on) + '</td><td>' + whenS(s.off) + ' <small style="color:var(--muted)">' + (s.how === 'Signed out' ? 'logged out' : 'closed') + '</small></td><td>' + adLen(s.on, s.off) + '</td><td>' + esc(s.dev || '—') + '</td></tr>';
-  })).join('') : '';
-
-  return '<div class="hello"><div><h1>Activity &amp; who\'s online</h1><p>Everything staff do, as it happens. This page updates by itself.</p></div></div>' +
-    '<section class="panel"><div class="adtop"><h2 class="ph">Who\'s online</h2><span class="hint" style="margin:0">' + (pres ? online + ' of ' + pres.length + ' online now' : '') + '</span></div>' +
-    '<div class="who" style="margin-top:14px">' + who + '</div></section>' +
+  if (F.days === 1) cut = ms(new Date(Date.now() + PH).toISOString().slice(0, 10) + 'T00:00');
+  var inRange = function (v) { return v && (!cut || ms(v) >= cut); };
+  var log = '', shifts = '';
+  if (A) {
+    var lastDay = '';
+    log = A.activity.filter(function (a) {
+      return inRange(a.at) && (F.kind === 'all' || adKind(a) === F.kind) && (F.who === 'all' || a.email === F.who);
+    }).slice(0, 250).map(function (a) {
+      var day = adDay(a.at), head = day !== lastDay ? '<div class="daygrp">' + esc(day) + '</div>' : '';
+      lastDay = day;
+      var tag = a.action === 'staffLogin' ? '<span class="inout">IN</span>' : a.action === 'staffLogout' ? '<span class="inout out">OUT</span>' : '';
+      return head + '<div class="actrow"><span>' + adTime(a.at) + '</span><span>' + tag + '<b>' + esc(a.action === 'createBooking' ? 'Guest' : adName(a.email)) + '</b> ' + esc(adText(a)) + '</span></div>';
+    }).join('');
+    shifts = adShifts(A.activity).filter(function (s) { return (F.who === 'all' || s.email === F.who) && inRange(s.inAt || s.outAt); }).slice(0, 80).map(function (s) {
+      return '<tr><td><b>' + esc(adName(s.email)) + '</b></td><td>' + (s.inAt ? whenS(s.inAt) : '—') + '</td><td>' + (s.outAt ? whenS(s.outAt) : '<small style="color:var(--muted)">Not signed out yet</small>') + '</td><td>' + (s.inAt && s.outAt ? adLen(s.inAt, s.outAt) : '—') + '</td></tr>';
+    }).join('');
+  }
+  return '<div class="hello"><div><h1>Recent activity</h1><p>Everything staff do, with the time they sign in and sign out.</p></div><button type="button" class="pill ghost sm" data-act="adrefresh">↻ Refresh</button></div>' +
+    (S.error ? '<div class="err" role="alert">' + esc(S.error) + '</div>' : '') +
+    '<section class="panel"><h2 class="ph">Time in &amp; out</h2>' +
+    (A ? (shifts ? '<div class="tscroll" style="margin-top:12px"><table><thead><tr><th>Name</th><th>Signed in</th><th>Signed out</th><th>How long</th></tr></thead><tbody>' + shifts + '</tbody></table></div>' : '<p class="empty">No sign-ins in this period.</p>') : '<div class="loading" style="padding:20px"><div class="spin"></div>Loading…</div>') +
+    '<p class="hint">Sign-out times show from now on. If someone closes the portal without tapping Log out, it says "Not signed out yet".</p></section>' +
     '<section class="panel"><h2 class="ph">Activity log</h2>' +
     '<div class="afil"><label class="sr" for="af_who">Person</label><select class="inp" id="af_who"><option value="all">Everyone</option>' +
     people.map(function (e) { return '<option value="' + esc(e) + '"' + (F.who === e ? ' selected' : '') + '>' + esc(adName(e)) + '</option>'; }).join('') + '</select>' +
     [[1, 'Today'], [7, '7 days'], [30, '30 days'], [0, 'All']].map(function (t) { return '<button type="button" class="sortb" data-afdays="' + t[0] + '" aria-pressed="' + (F.days === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div class="afil">' + AD_KINDS.map(function (k) { return '<button type="button" class="sortb" data-afkind="' + k[0] + '" aria-pressed="' + (F.kind === k[0]) + '">' + k[1] + '</button>'; }).join('') + '</div>' +
-    (!A ? '<div class="loading" style="padding:20px"><div class="spin"></div>Loading the log…</div>' : log || '<p class="empty">Nothing in this period.</p>') + '</section>' +
-    '<section class="panel"><h2 class="ph" style="margin-bottom:10px">Sign-in history</h2>' +
-    (sess ? '<div class="tscroll"><table><thead><tr><th>Name</th><th>Online from</th><th>Offline</th><th>How long</th><th>Device</th></tr></thead><tbody>' + sess + '</tbody></table></div>' : '<p class="empty">' + (A ? 'No sign-ins recorded yet. They start showing from now on.' : 'Loading…') + '</p>') +
-    '<p class="hint">Someone counts as offline about a minute after they log out, close the portal or their phone screen turns off.</p></section>';
+    (!A ? '<div class="loading" style="padding:20px"><div class="spin"></div>Loading the log…</div>' : log || '<p class="empty">Nothing in this period.</p>') + '</section>';
 }
 function loadAct() { post({ action: 'staffActivity' }).then(function (d) { S.act = d; if (S.page === 'activity') render(); }).catch(fail); }
 
 PAGES.activity = {
   show: function () { return false; }, menu: isFinance, html: activityHtml,
-  enter: function () {
-    if (!S.af) S.af = { who: 'all', kind: 'all', days: 7 };
-    loadAct();
-    if (typeof liveTick === 'function') liveTick(true);
-  },
+  enter: function () { S.error = ''; if (!S.af) S.af = { who: 'all', kind: 'all', days: 7 }; loadAct(); },
   click: function (e) {
     if (S.page !== 'activity') return false;
-    var el = e.target.closest('[data-afdays],[data-afkind]');
+    var el = e.target.closest('[data-afdays],[data-afkind],[data-act="adrefresh"]');
     if (!el) return false;
+    if (el.dataset.act === 'adrefresh') { S.act = null; render(); loadAct(); return true; }
     if (el.dataset.afdays != null) S.af.days = +el.dataset.afdays;
     if (el.dataset.afkind) S.af.kind = el.dataset.afkind;
     render(); return true;
