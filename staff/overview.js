@@ -145,7 +145,7 @@ function overviewHtml() {
     cal = i === -1 ? '' : '<section class="panel"><h2 class="ph" style="margin-bottom:12px">Occupancy summary</h2>' + c.slice(i + '<section class="panel">'.length);
   }
   return head + (S.error ? '<div class="err" role="alert">' + esc(S.error) + '</div>' : '') + (S.ovMsg ? '<div class="okmsg" role="status">' + esc(S.ovMsg) + '</div>' : '') + stats + cal +
-    (S.ov ? ovUsersHtml() + ovReviewsHtml() + ovDataHtml() : '<div class="loading"><div class="spin"></div>Loading users &amp; reviews…</div>');
+    (S.ov ? ovUsersHtml() + ovReviewsHtml() : '<div class="loading"><div class="spin"></div>Loading users &amp; reviews…</div>');
 }
 
 function loadOv() { post({ action: 'staffOverview' }).then(function (d) { S.ov = d; render(); }).catch(fail); }

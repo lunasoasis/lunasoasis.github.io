@@ -331,7 +331,7 @@ function render() {
   if (!S.data) return;
   var focus = document.activeElement && document.activeElement.id, caret = focus === 'q' ? document.activeElement.selectionStart : null;
   var me = S.me, pages = navPages();
-  if (pages.indexOf(S.page) === -1) S.page = 'bookings';
+    if (pages.indexOf(S.page) === -1 && !(PAGES[S.page] && PAGES[S.page].menu && PAGES[S.page].menu())) S.page = 'bookings';
   var portal = me.role === 'admin' ? 'Admin portal' : me.role === 'coadmin' ? 'Co-admin portal' : 'Operator portal';
   var navBtns = function (cls) {
     return pages.map(function (k) {
@@ -347,6 +347,7 @@ function render() {
     '<div class="pav"><button type="button" class="avbtn" data-act="menu" aria-label="Open profile menu" aria-expanded="' + S.menu + '" style="--c:' + c + '">' + catSvg(me, 46) + '</button>' +
     (S.menu ? '<div class="menu"><div class="mh"><b>' + esc(me.name) + '</b><small style="color:var(--soft)">' + esc(me.email) + '</small><br><span class="badge" style="background:' + c + '">' + roleLabel(me.role) + '</span></div>' +
     '<div class="mpages"><div class="mk">Pages</div>' + navBtns('') + '</div>' +
+    (typeof menuExtra === 'function' ? menuExtra() : '') + '<div class="mk">My account</div>' +
     '<button type="button" data-act="avatar">Change my picture</button><button type="button" data-act="chpw">Change my password</button><a href="../" target="_blank" rel="noopener">View public site</a><button type="button" class="out" data-act="logout">Log out</button></div>' : '') +
     '</div>' +
     '<main class="pmain"><div class="kick">' + kicker() + (S.stale ? ' <span class="upd">· Updating…</span>' : '') + '</div>' +
