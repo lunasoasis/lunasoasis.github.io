@@ -9,6 +9,7 @@
 // ---------- more cat pictures ----------
 FUR.brown = ['#9A6B47', '#D9A88A', '#FFF6EA'];
 FUR.white = ['#FFFFFF', '#F6C9C9', '#2E2621'];
+FUR.purple = ['#B79CE8', '#E7D3FF', '#2E2621'];
 CATS.push(
   { id: 'c19', label: 'Chef', bg: '#E8C9A0', fur: 'ginger', face: EYES_HAPPY + SMILE + BLUSH, extra: '<path d="M16.5 12.5h15v-3.2a4 4 0 0 0-2.6-5.6 4.6 4.6 0 0 0-4.9-1.9 4.6 4.6 0 0 0-4.9 1.9 4 4 0 0 0-2.6 5.6z" fill="#FFFFFF" stroke="#D9CBB5" stroke-width=".8"/><rect x="16.5" y="11.5" width="15" height="3" rx="1" fill="#FFFFFF" stroke="#D9CBB5" stroke-width=".8"/>' },
   { id: 'c20', label: 'Flower', bg: '#BFE0A8', fur: 'cream', face: DOTS + SMILE + BLUSH, extra: '<g fill="#F59AAE"><circle cx="35" cy="9" r="2.6"/><circle cx="39.6" cy="12" r="2.6"/><circle cx="38" cy="17" r="2.6"/><circle cx="32.2" cy="17" r="2.6"/><circle cx="30.6" cy="12" r="2.6"/></g><circle cx="35" cy="13.2" r="2.2" fill="#F2C14E"/>' },
@@ -25,7 +26,19 @@ CATS.push(
   { id: 'c31', label: 'Boba', bg: '#E9D3B6', fur: 'brown', face: EYES_HAPPY + W_MOUTH, extra: '<path d="M4.5 33h8l-1 10h-6z" fill="#F3E2C7" stroke="#7A5A2E" stroke-width=".9"/><path d="M10 33l2.5-6" stroke="#E2586B" stroke-width="1.6" stroke-linecap="round"/><g fill="#3A2A1E"><circle cx="7" cy="41" r="1"/><circle cx="9.5" cy="40.6" r="1"/><circle cx="8.2" cy="38.8" r="1"/></g>' },
   { id: 'c32', label: 'Strawberry', bg: '#FFC2C7', fur: 'white', face: DOTS + SMILE + BLUSH, extra: '<path d="M35 9q6 0 5 6-1.6 5-5 7-3.4-2-5-7-1-6 5-6z" fill="#E2586B"/><path d="M31.5 9.5l3.5-3 3.5 3-3.5 1z" fill="#7FB98A"/><g fill="#FFE9A8"><circle cx="33.5" cy="13" r=".6"/><circle cx="36.5" cy="13" r=".6"/><circle cx="35" cy="16" r=".6"/></g>' },
   { id: 'c33', label: 'Sailor', bg: '#7FB3D5', fur: 'white', face: DOTS + W_MOUTH + BLUSH, extra: '<path d="M15 12.5q9-6 18 0z" fill="#FFFFFF" stroke="#2E4A6B" stroke-width="1"/><rect x="15" y="11.5" width="18" height="2.4" fill="#2E4A6B"/>' },
-  { id: 'c34', label: 'Grandma', bg: '#D8C3E6', fur: 'gray', face: '<circle cx="19" cy="29" r="3.4" fill="none" stroke="S" stroke-width="1.2"/><circle cx="29" cy="29" r="3.4" fill="none" stroke="S" stroke-width="1.2"/><path d="M22.4 29h3.2" stroke="S" stroke-width="1.2"/><path d="M17.3 29.4q1.7 1.2 3.4 0M27.3 29.4q1.7 1.2 3.4 0" fill="none" stroke="S" stroke-width="1.3" stroke-linecap="round"/>' + SMILE + BLUSH, extra: '<circle cx="24" cy="7.5" r="4.2" fill="#E7E2DA" stroke="#B9AE9F" stroke-width=".8"/>' }
+  { id: 'c34', label: 'Grandma', bg: '#D8C3E6', fur: 'gray', face: '<circle cx="19" cy="29" r="3.4" fill="none" stroke="S" stroke-width="1.2"/><circle cx="29" cy="29" r="3.4" fill="none" stroke="S" stroke-width="1.2"/><path d="M22.4 29h3.2" stroke="S" stroke-width="1.2"/><path d="M17.3 29.4q1.7 1.2 3.4 0M27.3 29.4q1.7 1.2 3.4 0" fill="none" stroke="S" stroke-width="1.3" stroke-linecap="round"/>' + SMILE + BLUSH, extra: '<circle cx="24" cy="7.5" r="4.2" fill="#E7E2DA" stroke="#B9AE9F" stroke-width=".8"/>' },
+  { id: 'c35', label: 'Super Paw', bg: '#6C5CE7', fur: 'cream', face: '<path d="M16 25.5l5 1.4M32 25.5l-5 1.4" stroke="S" stroke-width="1.6" stroke-linecap="round"/>' + DOTS + SMILE, extra: '<path d="M8 47q2-9 8-11h16q6 2 8 11z" fill="#E2586B"/><circle cx="24" cy="40.5" r="4" fill="#F2C14E" stroke="#FFF6EA" stroke-width=".8"/><g fill="#7A5A2E"><circle cx="24" cy="41.5" r="1.3"/><circle cx="22" cy="39.2" r=".7"/><circle cx="24" cy="38.5" r=".7"/><circle cx="26" cy="39.2" r=".7"/></g>' },
+  { id: 'c36', label: 'Robot', bg: '#6FB7B2', fur: 'gray', face: '<rect x="13.5" y="25" width="21" height="7.5" rx="3.7" fill="#1B1714"/><rect x="16" y="27.2" width="5" height="3" rx="1.5" fill="#7FE0F0"/><rect x="27" y="27.2" width="5" height="3" rx="1.5" fill="#7FE0F0"/><path d="M21 36h6" stroke="S" stroke-width="1.6" stroke-linecap="round"/>', extra: '<path d="M24 12.5V6" stroke="#2E2621" stroke-width="1.4"/><circle cx="24" cy="5" r="2.2" fill="#E2586B"/>' },
+  { id: 'c37', label: 'Lightning', bg: '#2D9CDB', fur: 'white', face: EYES_HAPPY + W_MOUTH + BLUSH, extra: '<path d="M38 2l-7 10h4.5l-3 9 9-12h-4.5l3.5-7z" fill="#F2D06B" stroke="#FFF6EA" stroke-width=".7" stroke-linejoin="round"/>' },
+  { id: 'c38', label: 'Bunny ears', bg: '#F7D6E0', fur: 'white', face: DOTS + SMILE + BLUSH, extra: '<ellipse cx="18.5" cy="7.5" rx="3.2" ry="7.5" fill="#FFFFFF" stroke="#F2B8C6" stroke-width=".8"/><ellipse cx="18.5" cy="8" rx="1.4" ry="5" fill="#F6C9C9"/><ellipse cx="29.5" cy="7.5" rx="3.2" ry="7.5" fill="#FFFFFF" stroke="#F2B8C6" stroke-width=".8"/><ellipse cx="29.5" cy="8" rx="1.4" ry="5" fill="#F6C9C9"/>' },
+  { id: 'c39', label: 'Pudding', bg: '#FFE8A3', fur: 'ginger', face: DOTS + SMILE + BLUSH, extra: '<path d="M32.5 37.5h10.5l-1.6 7h-7.3z" fill="#F5D27A" stroke="#C99A3E" stroke-width=".7"/><path d="M33 37.5q5-4.5 9.5 0z" fill="#8A5A2B"/>' },
+  { id: 'c40', label: 'Alien', bg: '#3B3561', fur: 'purple', face: '<ellipse cx="19" cy="29" rx="2.6" ry="3.4" fill="#1B1714"/><ellipse cx="29" cy="29" rx="2.6" ry="3.4" fill="#1B1714"/><circle cx="19.8" cy="27.8" r=".9" fill="#fff"/><circle cx="29.8" cy="27.8" r=".9" fill="#fff"/>' + SMILE, extra: '<path d="M19 13l-3-8M29 13l3-8" stroke="#B79CE8" stroke-width="1.4" stroke-linecap="round"/><circle cx="16" cy="4.5" r="2" fill="#7FE0A8"/><circle cx="32" cy="4.5" r="2" fill="#7FE0A8"/>' },
+  { id: 'c41', label: 'Strong', bg: '#F28C28', fur: 'ginger', face: '<path d="M16 25.5l5 1.6M32 25.5l-5 1.6" stroke="S" stroke-width="1.8" stroke-linecap="round"/>' + DOTS + '<path d="M20.5 33.5q3.5 2.6 7 0" fill="none" stroke="S" stroke-width="1.6" stroke-linecap="round"/>', extra: '<rect x="31" y="38" width="11" height="2.2" fill="#2E2621"/><rect x="29.5" y="35" width="3.2" height="8.2" rx="1" fill="#2E2621"/><rect x="40.3" y="35" width="3.2" height="8.2" rx="1" fill="#2E2621"/>' },
+  { id: 'c42', label: 'Astronaut', bg: '#1F2A44', fur: 'white', face: DOTS + W_MOUTH + BLUSH, extra: '<circle cx="24" cy="25.5" r="15.5" fill="rgba(160,216,239,.16)" stroke="#E7E2DA" stroke-width="2"/><path d="M14 18q3-5 8-6" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" opacity=".8"/><text x="38" y="9" font-size="7" fill="#F2D06B">★</text><text x="5" y="14" font-size="5" fill="#F2D06B">★</text>' },
+  { id: 'c43', label: 'Witch', bg: '#5B3A7A', fur: 'black', face: '<circle cx="19" cy="29.5" r="2" fill="#E9C46A"/><circle cx="29" cy="29.5" r="2" fill="#E9C46A"/>' + W_MOUTH, extra: '<ellipse cx="24" cy="12.8" rx="12" ry="2.3" fill="#2E2621"/><path d="M17.5 12.5l6.5-11.5 2 4 4.5 7.5z" fill="#2E2621"/><rect x="18" y="9.6" width="12" height="2" fill="#B07CD8"/>' },
+  { id: 'c44', label: 'Dino', bg: '#9BD17E', fur: 'cream', face: EYES_HAPPY + SMILE + BLUSH, extra: '<path d="M15 13l2.6-4.5 2.6 4.5zM21.4 12l2.6-5 2.6 5zM27.8 13l2.6-4.5 2.6 4.5z" fill="#4E9F3D"/>' },
+  { id: 'c45', label: 'Cloud', bg: '#BFE6FF', fur: 'white', face: '<path d="M16.5 29h5M26.5 29h5" stroke="S" stroke-width="1.8" stroke-linecap="round"/>' + SMILE + BLUSH, extra: '<path d="M31.5 15a3.6 3.6 0 0 1 .4-7.2 4.6 4.6 0 0 1 8.7 1.6 3 3 0 0 1 .4 5.6z" fill="#FFFFFF"/><path d="M4 22a2.6 2.6 0 0 1 .3-5.2 3.4 3.4 0 0 1 6.3 1.1 2.2 2.2 0 0 1 .3 4.1z" fill="#FFFFFF" opacity=".85"/>' },
+  { id: 'c46', label: 'Pirate', bg: '#3E7CB1', fur: 'ginger', face: '<circle cx="19" cy="29" r="2" fill="S"/><circle cx="29" cy="29" r="3.4" fill="#1B1714"/><path d="M12 24.5l25 8" stroke="#1B1714" stroke-width="1.1"/>' + SMILE, extra: '<path d="M14.5 13.5q9.5-6 19 0v1.5h-19z" fill="#C23E52"/><g fill="#FFF6EA"><circle cx="20" cy="12" r=".8"/><circle cx="24" cy="10.8" r=".8"/><circle cx="28" cy="12" r=".8"/></g><path d="M33.5 14l4 2-3 1.5z" fill="#C23E52"/>' }
 );
 catOf = function (p) {   // people who never picked keep the same cat when new ones are added
   var name = typeof p === 'string' ? p : (p && p.name) || '', pick = p && typeof p === 'object' && catById(p.avatar);
@@ -166,14 +179,52 @@ loadAll = function (fresh) {
 // ---------- "Log out & forget me on this device" in the cat menu ----------
 var plainRender = render;
 render = function () {
+  var dr = S.avPick && app.querySelector('.drawer'), keep = dr ? dr.scrollTop : 0;   // the picture list stays where you scrolled
   plainRender();
+  dr = S.avPick && app.querySelector('.drawer'); if (dr && keep) dr.scrollTop = keep;
   var lo = S.menu && app.querySelector('.menu [data-act="logout"]');
   if (lo && S.me && savedAccts()[S.me.name] && !app.querySelector('[data-act="forget"]'))
     lo.insertAdjacentHTML('afterend', '<button type="button" class="out" data-act="forget" style="font-size:12.5px">Log out &amp; forget me on this device</button>');
+  var grid = S.avPick && app.querySelector('.catgrid');
+  if (grid) {
+    grid.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+    var c = catById(S.me.avatar) || catOf(S.me);
+    grid.insertAdjacentHTML('beforebegin', '<p class="avstat" role="status">' + (S.avSaving ? 'Saving “' + esc(c.label) + '”…' : S.avSaved ? '✓ Saved — everyone now sees “' + esc(c.label) + '”.' : 'Now: “' + esc(c.label) + '”') + '</p>');
+    if (!S.avSaving && !S.avSaved) { var on = grid.querySelector('[aria-pressed="true"]'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' }); }
+  }
 };
+// ---------- picture picker: the cat you tap lights up right away ----------
+(function () {
+  var st = document.createElement('style');
+  st.textContent =
+    '.catgrid button{transition:transform .12s,box-shadow .12s,background .12s;position:relative}' +
+    '.catgrid button:active{transform:scale(.94)}' +
+    '.catgrid button[aria-pressed="true"]{border:2px solid #C9A96E;background:#F3E6C8;box-shadow:0 0 0 3px rgba(201,169,110,.45),0 8px 18px rgba(122,90,46,.25);transform:scale(1.04)}' +
+    '.catgrid button[aria-pressed="true"] span{color:#7A5A2E;font-weight:700}' +
+    '.catgrid button[aria-pressed="true"]::after{content:"\\2713";position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#2F5A47;color:#fff;font-size:13px;font-weight:700;line-height:22px;text-align:center}' +
+    '.avstat{margin:0 0 10px;font-size:13px;font-weight:600;color:#2F5A47}';
+  document.head.appendChild(st);
+})();
+function avPick(id) {
+  var old = S.me.avatar;
+  S.me.avatar = id; S.avSaving = id; S.avSaved = false; S.error = '';
+  if (S.an && S.an.people) S.an.people.forEach(function (p) { if (p.email === S.me.email) p.avatar = id; });
+  render();
+  post({ action: 'staffSetAvatar', avatar: id }, 1).then(function (d) {
+    if (S.avSaving !== id) return;   // they already tapped another one
+    S.avSaving = ''; S.avSaved = true; S.data = d; S.me = d.me; saveCache('bk', d); render();
+  }).catch(function (err) {
+    if (S.avSaving !== id) return;
+    S.avSaving = ''; S.me.avatar = old; fail(err);
+  });
+}
+
 PAGES.accounts = {
   show: function () { return false; },
   click: function (e) {
+    var cat = e.target.closest('[data-cat]');
+    if (cat) { avPick(cat.dataset.cat); return true; }
+    if (e.target.closest('[data-act="avatar"]')) { S.avSaved = false; S.avSaving = ''; return false; }
     var el = e.target.closest('[data-act="forget"]');
     if (!el) return false;
     forgetAcct(S.me.name); signOut('');
