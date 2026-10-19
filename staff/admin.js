@@ -23,7 +23,7 @@ if (NAV.overview) NAV.overview[0] = 'Overview · reviews';   // users now have t
 function menuExtra() {
   if (!isFinance()) return '';
   var b = function (k, t) { return '<button type="button" data-page="' + k + '"' + (S.page === k ? ' aria-current="page"' : '') + '>' + t + '</button>'; };
-  return '<div class="mk">Admin</div>' + b('users', 'Users') + b('payments', 'Payments by method') + b('activity', 'Recent activity');
+  return '<div class="mk">Admin</div>' + b('users', 'Users') + b('activity', 'Recent activity');
 }
 
 function adName(email) { return staffName(email); }
@@ -88,7 +88,7 @@ function paymentsHtml() {
   var rows = list.map(function (p) {
     return '<tr class="rowb" data-open="' + esc(p.ref) + '" tabindex="0"><td>' + whenS(p.at) + '</td><td class="ref">' + esc(p.ref) + '</td><td>' + esc(p.guest) + '</td><td>' + esc(p.method) + '</td><td>' + esc(p.refno || '—') + '</td><td>' + esc(adName(p.by)) + '</td><td class="num"><b>' + peso(p.amount) + '</b></td></tr>';
   }).join('');
-  return '<div class="hello"><div><h1>Payments by method</h1><p>Every payment staff recorded — GCash or bank transfer, deposits included.</p></div></div>' +
+  return '<div class="hello"><div><h1>Payments</h1><p>Every payment staff recorded — GCash or bank transfer, deposits included.</p></div></div>' +
     '<section class="panel"><div class="adtop"><div class="tabs">' +
     '<button type="button" class="sortb" data-pmmode="month" aria-pressed="' + (P.mode === 'month') + '">Month</button><button type="button" class="sortb" data-pmmode="year" aria-pressed="' + (P.mode === 'year') + '">Year</button></div>' +
     '<div class="mnav"><button type="button" class="round" data-pmstep="-1" aria-label="Previous">‹</button><b>' + label + '</b><button type="button" class="round" data-pmstep="1" aria-label="Next">›</button></div>' +
@@ -108,7 +108,7 @@ function paymentsHtml() {
 }
 
 PAGES.payments = {
-  show: function () { return false; }, menu: isFinance, html: paymentsHtml,
+  label: 'Payments', show: isFinance, html: paymentsHtml,
   enter: function () { if (!S.pm) { var t = new Date(Date.now() + PH); S.pm = { mode: 'month', y: t.getUTCFullYear(), m: t.getUTCMonth(), method: 'all' }; } },
   click: function (e) {
     if (S.page !== 'payments') return false;

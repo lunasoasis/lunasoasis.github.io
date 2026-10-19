@@ -69,13 +69,40 @@ function anAct(body, after) {
   S.busy = true; S.error = ''; render();
   return post(body, 0).then(function (d) { S.an = d; saveCache('an', d); S.busy = false; if (after) after(); render(); }).catch(fail);
 }
-function anSend(id) {
-  var t = (S.anDraft[id] || '').trim();
-  if (!t || S.busy) return;
-  anAct({ action: 'staffAnnounce', op: 'comment', id: id, text: t }, function () {
-    S.anDraft[id] = '';
-    setTimeout(function () { var el = document.getElementById('anc-' + id); if (el) el.focus(); }, 0);
+// Reactions and comments show at once; the server saves them in the background.
+var AN_Q = 0;   // changes still being saved
+function anRedraw() { if (typeof liveRender === 'function') liveRender(); else render(); }
+function anQuiet(body) {
+  AN_Q++;
+  return post(body, 1).then(function (d) {
+    AN_Q--;
+    if (!AN_Q) { S.an = d; saveCache('an', d); anRedraw(); }
+  }).catch(function (err) {
+    AN_Q--;
+    if (err && err.auth) { signOut('Please sign in again.'); return; }
+    S.error = err && err.message && err.message !== 'Failed to fetch' ? err.message : 'That did not save — please check your connection and try again.';
+    loadAn(true);
   });
+}
+function anPost(id) { return S.an.posts.filter(function (x) { return x.id === id; })[0]; }
+function anNow() { return new Date(Date.now() + PH).toISOString().slice(0, 16); }
+function anSend(id) {
+  var t = (S.anDraft[id] || '').trim(), p = anPost(id);
+  if (!t || !p) return;
+  p.comments.push({ id: 'tmp' + Date.now(), at: anNow(), author: S.me.email, text: t });
+  S.anDraft[id] = ''; S.error = '';
+  render();
+  var el = document.getElementById('anc-' + id); if (el) el.focus();
+  anQuiet({ action: 'staffAnnounce', op: 'comment', id: id, text: t });
+}
+function anVote(id, v) {
+  var p = anPost(id); if (!p) return;
+  var old = p.myVote, nv = old === v ? 0 : v;
+  if (old === 1) p.up--; if (old === -1) p.down--;
+  if (nv === 1) p.up++; if (nv === -1) p.down++;
+  p.myVote = nv; S.error = '';
+  render();
+  anQuiet({ action: 'staffAnnounce', op: 'vote', id: id, value: nv });
 }
 
 PAGES.announce = {
@@ -93,13 +120,17 @@ PAGES.announce = {
     if (d.ansort) { S.anSort = d.ansort; render(); return true; }
     if (d.antoggle) { S.anOpen[d.antoggle] = !S.anOpen[d.antoggle]; render(); return true; }
     if (d.ansend) { anSend(d.ansend); return true; }
-    if (d.anvote) {
-      var p = S.an.posts.filter(function (x) { return x.id === d.anvote; })[0], v = +d.v;
-      anAct({ action: 'staffAnnounce', op: 'vote', id: d.anvote, value: p && p.myVote === v ? 0 : v });
-      return true;
+    if (d.anvote) { anVote(d.anvote, +d.v); return true; }
+    if (d.andel) {
+      if (!window.confirm('Delete this announcement?')) return true;
+      S.an.posts = S.an.posts.filter(function (x) { return x.id !== d.andel; }); render();
+      anQuiet({ action: 'staffAnnounce', op: 'delete', id: d.andel }); return true;
     }
-    if (d.andel) { if (window.confirm('Delete this announcement?')) anAct({ action: 'staffAnnounce', op: 'delete', id: d.andel }); return true; }
-    if (d.ancdel) { if (window.confirm('Delete this comment?')) anAct({ action: 'staffAnnounce', op: 'uncomment', comment_id: d.ancdel }); return true; }
+    if (d.ancdel) {
+      if (/^tmp/.test(d.ancdel) || !window.confirm('Delete this comment?')) return true;
+      S.an.posts.forEach(function (x) { x.comments = x.comments.filter(function (c) { return c.id !== d.ancdel; }); }); render();
+      anQuiet({ action: 'staffAnnounce', op: 'uncomment', comment_id: d.ancdel }); return true;
+    }
     if (d.act === 'anrefresh') { loadAn(true); return true; }
     if (d.act === 'anpost') {
       if (S.anForm.title.trim().length < 2) { S.error = 'Please type a title.'; render(); return true; }

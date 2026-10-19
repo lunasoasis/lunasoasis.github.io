@@ -45,7 +45,7 @@ function liveReload() {
   var quiet = function (p) { return p.catch(function () {}); };
   var jobs = [quiet(post({ action: 'staffBookings' }, 0).then(function (d) { S.data = d; S.me = d.me || S.me; saveCache('bk', d); }))];
   if (S.up) jobs.push(quiet(post({ action: 'staffUpkeepData' }, 0).then(function (d) { S.up = d; saveCache('up', d); })));
-  if (S.an) jobs.push(quiet(post({ action: 'staffAnnounceData' }, 0).then(function (d) { S.an = d; saveCache('an', d); })));
+  if (S.an && !(window.AN_Q > 0)) jobs.push(quiet(post({ action: 'staffAnnounceData' }, 0).then(function (d) { S.an = d; saveCache('an', d); })));
   if (S.ov && isFinance()) jobs.push(quiet(post({ action: 'staffOverview' }, 0).then(function (d) { S.ov = d; })));
   if (S.act && isFinance()) jobs.push(quiet(post({ action: 'staffActivity' }, 0).then(function (d) { S.act = d; })));
   Promise.all(jobs).then(liveRender);
