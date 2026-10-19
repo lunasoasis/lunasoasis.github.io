@@ -373,112 +373,55 @@ td.num,th.num{text-align:right;white-space:nowrap}
   .bub{max-width:85%}
   .anpost.pinned .anhead{padding-top:20px}
   .anpost.pinned .pdel{margin-top:0}
-}/* records */
-.sel{min-height:36px;width:auto;padding:0 10px;font-size:14px}
-.xl{font-size:12px;color:var(--muted);align-self:center}
-.ph{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:26px;margin:0}
-.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:6px}
-.kpi{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
-.kpi small{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-.kpi b{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1.1}
-.kpi span{font-size:12.5px;color:var(--muted)}
-.kpi.big2{background:var(--ink);color:var(--cream);border-color:var(--ink)}
-.kpi.big2 small{color:var(--gold)}
-.kpi.big2 span{color:var(--soft)}
-.bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end;height:200px;margin-top:10px}
-.bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;background:none;border:0;cursor:pointer;padding:0;color:var(--text)}
-.bar .bb{width:100%;max-width:46px;border-radius:10px 10px 4px 4px}
-.bar .bv{font-size:11px;color:var(--muted)}
-.bar .bl{font-size:12px}
-.bar[aria-current="true"] .bl{font-weight:700;color:var(--bronze)}
-.twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
-.meth{margin-bottom:8px}
-.mbar{height:8px;border-radius:999px;background:#E6DCCB;overflow:hidden}
-.mbar span{display:block;height:100%;border-radius:999px;background:#4F7A63}
-select.inp{appearance:auto}
-
-@media (max-width: 1100px){
-  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-}
-@media (max-width: 820px){
-  .panel table:has(+ .cards){display:none}
-  .kpis{grid-template-columns:1fr 1fr}
-  .kpi b{font-size:22px}
-  .twocol{grid-template-columns:1fr}
-  .bars{gap:3px;height:200px}
-  .bar .bv{font-size:8px}
-  .bar .bl{font-size:10px}
-  .ph{font-size:22px}
-  .calbar h2{font-size:24px;min-width:0}
-  .cdow,.cgrid{gap:3px}
-  .cdow div{font-size:9px;letter-spacing:.06em}
-  .cday{min-height:62px;padding:4px;border-radius:8px}
-  .cday .top1 span{display:none}
-  .chip2{font-size:9px;padding:0 3px;border-radius:3px}
-  .gkey button{flex:1 1 100%}
-  .panel{padding:14px;border-radius:18px}
-  .search{max-width:none;width:100%}
-  .cards{display:block}
-  .card{border:1px solid var(--line);background:var(--paper);border-radius:16px;padding:12px 14px;margin-top:8px;cursor:pointer;width:100%;text-align:left;color:var(--text)}
-  .card .l1{display:flex;justify-content:space-between;gap:8px;align-items:center}
-  .card .l2{font-size:14px;margin-top:4px}
-  .card .l3{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:4px}
-}
+} /* overview (design) */
+.stats.big5 .stat:nth-child(5) .k{color:#7A5A2E}
+.stats.big5 .v{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.ovhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.ubtn.sm{min-height:38px;padding:0 14px;font-size:13px}
+.ovbtns{display:flex;gap:6px;white-space:nowrap}
+.ovst{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#E8DCC4;color:#2F5A47}
+.ovst.off{background:#F6E3DF;color:var(--bad)}
+.ovst.past{background:#E6DCCB;color:var(--muted)}
+.ovform{background:#EDE3D1;border-radius:18px;padding:16px;margin-bottom:14px;display:flex;flex-direction:column;gap:12px}
+.ovgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.ovgrid4{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
+.ovgrid4 .wide{grid-column:1 / -1}
+.ovform label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ovform .inp{background:var(--paper);border-color:#D3C4AA}
+.ovform textarea.inp{padding:10px 14px;min-height:64px;resize:vertical}
+.ovfixed{display:flex;align-items:center;color:var(--muted);background:#F3ECE0 !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovrevs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+.ovrev{border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ovrev p{margin:0;line-height:1.55;font-size:14px;overflow-wrap:anywhere}
+.ovr1{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.stars{color:#1B1714;letter-spacing:2px;font-size:15px}
+.ovreply{background:#F1E8D8;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.5}
+.ovreply small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.ovreplyform{display:flex;gap:8px}
+.ovreplyform .inp{min-height:40px;background:var(--paper)}
+.actrow{display:flex;gap:12px;padding:10px 0;border-top:1px solid #E6DCCB;font-size:14px}
+.actrow>span:first-child{color:var(--muted);min-width:130px;flex:none}
+.ovm{display:flex;justify-content:space-between;font-size:14px;font-weight:700}
 @media (max-width: 760px){
-  .shell{flex-direction:column}
-  .side{display:none}
-  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:30;height:56px;padding:6px 12px;background:#1B1714;border-bottom:1px solid rgba(201,169,110,.3);text-decoration:none;color:var(--cream)}
-  .topbar img{height:36px}
-  .topbar .script{font-size:22px;line-height:.95;display:block}
-  .topbar .oasis{font-size:10px;letter-spacing:.42em;display:block;margin-top:2px}
-  .pav{position:fixed;top:8px;right:12px;z-index:31}
-  .avbtn svg{width:40px;height:40px}
-  .menu{top:50px;width:240px;max-width:calc(100vw - 24px)}
-  .menu .mpages{display:flex}
-  .pmain{padding:12px 12px 28px;gap:12px}
-  .kick,.pmain>.hello{padding-right:0}
-  .pmain>.hello{margin-top:-8px}
-  .hello h1{font-size:30px}
-  .hello p{font-size:13px}
-  .stats{grid-template-columns:1fr 1fr;gap:8px}
-  .stat{padding:12px;border-radius:16px}
-  .stat .k{font-size:9.5px;letter-spacing:.04em}
-  .stat .v{font-size:16px}
-  .stat .s{font-size:11.5px}
-  .panel{padding:14px;border-radius:16px}
-  .ph,.h{font-size:22px}
-  .cols{gap:12px}
-  .cols>.detail{gap:12px}
-  .box{padding:12px}
-  th,td{padding:8px 8px;font-size:12.5px}
-  .lside{min-height:0;flex-basis:100%;border-right:0}
-  .lside .in{padding:28px 16px 30px}
-  .ringbox{width:150px;height:150px}
-  .ringbox .ph2{inset:20px;padding:4px}
-  .lside .script{font-size:46px;margin-top:10px}
-  .lside .oasis{font-size:30px}
-  .rule{margin-top:12px;font-size:11px}
-  .lmain{padding:18px 12px 40px;flex-basis:100%}
-  .lcard{padding:22px 18px;border-radius:18px}
-  .lcard h1{font-size:34px}
-  .lbl{font-size:11px;letter-spacing:.14em}
-  .linp{min-height:46px;font-size:15px}
-  .roles button{padding:10px 12px;font-size:21px}
-  .accts{gap:6px}
-  .acct{padding:8px 2px;gap:4px;border-radius:14px;font-size:12px}
-  .accts.adm .acct{padding:8px 10px;gap:8px;font-size:13px}
-  .acct svg{width:36px;height:36px}
+  .stats.big5 .v{font-size:22px}
+  .stats.big5 .stat:nth-child(5){grid-column:1 / -1}
+  .ovgrid4{grid-template-columns:1fr 1fr}
+  .ovgrid4 label:first-child{grid-column:1 / -1}
+  .actrow{flex-direction:column;gap:2px;font-size:13px}
+  .actrow>span:first-child{font-size:11.5px;min-width:0}
+  .ovreplyform{flex-direction:column}
 }
 </style>
 </head>
 <body>
 <div id="app"><div class="loading"><div class="spin"></div>Loading…</div></div>
 
-<script src="../js/config.js?v=6"></script>
-<script src="core.js?v=6"></script>
-<script src="calendar.js?v=6"></script>
-<script src="records.js?v=6"></script>
-<script src="upkeep.js?v=6"></script>
-<script src="announce.js?v=6"></script>
+<script src="../js/config.js?v=7"></script>
+<script src="core.js?v=7"></script>
+<script src="calendar.js?v=7"></script>
+<script src="records.js?v=7"></script>
+<script src="upkeep.js?v=7"></script>
+<script src="announce.js?v=7"></script>
+<script src="overview.js?v=7"></script>
 </body>
 </html>

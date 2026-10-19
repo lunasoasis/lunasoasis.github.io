@@ -220,7 +220,9 @@ function loadAll(fresh) {
   else if (!S.data) app.innerHTML = '<div class="loading"><div class="spin"></div>Loading bookings…</div>';
   else { S.stale = true; render(); }
   post({ action: 'staffBookings', fresh: !!fresh }).then(function (d) {      // …then swap in the fresh data
-    S.data = d; S.me = d.me; S.stale = false; S.offline = false; saveCache('bk', d); render();
+    S.data = d; S.me = d.me; S.stale = false; S.offline = false; saveCache('bk', d);
+    if (!S.landed) { S.landed = true; if (isFinance() && PAGES.overview && S.page === 'bookings') { S.page = 'overview'; PAGES.overview.enter(); } }   // admins start on Overview
+    render();
     prefetch();
   }).catch(function (err) {
     if (err.auth) { signOut('Please sign in again.'); return; }
@@ -246,6 +248,7 @@ function prefetch() {
 // ---------- main page ----------
 // Sidebar pages: [title, dot colour, order, admin & co-admin only?]
 var NAV = {
+  overview: ['Overview · users & reviews', '#7A5A2E', 0, true],
   calendar: ['Calendar', '#8C6A3C', 1, true],
   bookings: ['Bookings & payments', '#8E3B46', 2, false],
   records: ['Records & earnings', '#4F7A63', 3, true],
@@ -257,7 +260,7 @@ function navPages() {
   return keys.filter(function (k) {
     var n = NAV[k] || [], p = PAGES[k];
     return (!n[3] || isFinance()) && (!p || !p.show || p.show());
-  }).sort(function (a, b) { return ((NAV[a] || [])[2] || 9) - ((NAV[b] || [])[2] || 9); });
+    }).sort(function (a, b) { var o = function (k) { return NAV[k] && NAV[k][2] != null ? NAV[k][2] : 9; }; return o(a) - o(b); });
 }
 function lists() {
   var now = nowMs(), q = S.q.trim().toLowerCase(), all = S.data.bookings.slice();
