@@ -34,8 +34,12 @@ function gafOpen(ref) {
     var b = gafBooking(), df = d.defaults, last = d.last;
     var guests = b.guests.map(function (g) {
       var old = last && last.guests.filter(function (x) { return x.guest_no === g.no; })[0];
-      return { name: g.name, proof: old ? old.proof : '', reason: old ? old.reason : 'Visit', guest_no: g.no, attach: g.has_id, has_id: g.has_id };
+      return { name: g.name, proof: old ? old.proof : (g.child_age ? '(' + g.child_age + ')' : g.id_type || ''), reason: old ? old.reason : 'Visit', guest_no: g.no, attach: g.has_id, has_id: g.has_id };
     });
+    if (!last && b.baby_info) {   // the baby has no ID: list them with their age
+      var bp = b.baby_info.split(' · ');
+      guests.push({ name: bp[0], proof: '(' + (bp[1] || 'baby') + ')', reason: 'Visit', guest_no: 0, attach: false, has_id: false });
+    }
     if (last) last.guests.forEach(function (x) { if (!x.guest_no) guests.push({ name: x.name, proof: x.proof, reason: x.reason, guest_no: 0, attach: false, has_id: false }); });
     var l = {
       date: d.today, owner: df.owner, building: df.building, unit: df.unit, contact: df.contact,

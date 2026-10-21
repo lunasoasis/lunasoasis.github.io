@@ -131,6 +131,40 @@ button,input,select{font:inherit}
 .file .fs{font-size:13px;color:var(--muted)}
 .file .fs.ok{color:var(--ok)}
 .file img{width:44px;height:30px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.pkg .tot{font-size:13px;color:var(--muted);margin-top:8px}
+.pkg .tot b{color:var(--text)}
+.pkghead{font-size:13px;font-weight:600;color:var(--text);margin:18px 0 8px}
+.pkghead:first-of-type{margin-top:4px}
+.altlink{display:block;width:100%;margin-top:14px;text-align:left;background:transparent;border:1.5px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);cursor:pointer;font-size:14px;line-height:1.45}
+.altlink b{color:var(--bronze);font-weight:600}
+.altlink:hover{border-color:var(--bronze)}
+.backlink{background:none;border:0;color:var(--bronze);cursor:pointer;padding:6px 0;font-size:14px;margin:0 0 6px;text-decoration:underline;text-underline-offset:3px}
+.staybar{display:flex;flex-wrap:wrap;gap:6px 16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:14px;color:var(--text);margin:0 0 16px}
+.bk{border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:8px 16px 10px;color:var(--text)}
+.bk .r{display:flex;justify-content:space-between;gap:12px;font-size:14.5px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.bk .r span:last-child{text-align:right;white-space:nowrap}
+.bk .r.disc{color:var(--ok)}
+.bk .r.tot{border-bottom:0;font-weight:600;padding-top:10px;align-items:baseline}
+.bk .r.tot span:last-child{font-family:'Cormorant Garamond',serif;font-size:30px}
+select.inp{cursor:pointer;padding-right:8px}
+.kind{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.kind .chip{padding:0 14px}
+.idprev{display:flex;align-items:center;gap:12px;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.idprev button{padding:0;border:0;background:none;cursor:zoom-in;flex:none;line-height:0}
+.idprev img{width:104px;height:68px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.idprev .pdf{width:104px;height:68px;border-radius:8px;background:#F1E8DA;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--bronze);flex:none;line-height:1.2}
+.idprev .idcap{font-size:13px;line-height:1.45;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.idprev .idcap b{display:block;color:var(--text);font-size:14px}
+.idprev .idcap .ok{color:var(--ok)}
+.agebox{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.agebox .inp{width:96px}
+.agebox select.inp{width:auto;min-width:120px}
+.ghint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.babybox{border:1px dashed var(--bronze);border-radius:16px;padding:12px 16px;margin-top:10px;background:var(--paper)}
+.miss{font-size:13.5px;color:var(--bad);margin:14px 0 0}
+#idview{position:fixed;inset:0;z-index:60;background:rgba(14,12,11,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px}
+#idview img{max-width:min(720px,100%);max-height:75vh;border-radius:12px}
+#idview p{margin:0;color:#F3ECE0;text-align:center;font-size:15px}
 
 /* details */
 .rules{margin:10px 0 0;padding:0;list-style:none;font-size:14px}
@@ -283,7 +317,7 @@ button,input,select{font:inherit}
   var gapMs = 2 * HOUR;
   var S = {
     step: 1, y: 0, m: 0, inDay: '', nights: 1, outPicked: false, time: '', pkg: '', tier: 0, extra: 0,
-    pax: 2, baby: false, guests: [], email: '', agree: false,
+    alt: false, pax: 2, baby: false, babyName: '', babyAge: '', babyUnit: 'months', guests: [], email: '', agree: false,
     busy: false, error: '', ticket: null
   };
 
@@ -314,11 +348,11 @@ button,input,select{font:inherit}
   function step() { return cfg.checkin_step_minutes || 30; }
 
   // The stay the guest has chosen so far.
+  // S.nights = nights picked on the calendar. S.alt = the guest chose a shorter stay
+  // (10 hours, or 22 hours only) on its own screen; S.nights is kept so going back restores it.
   function isNightly() { var r = rateOf(S.pkg); return !!(r && r.hours >= 20); }
-  function nights() { return isNightly() ? S.nights : 0; }
-    // dates shown on the calendar: a 10-hour stay uses only the check-in date,
-  // but S.nights is kept so switching back to 22 hours restores the nights
-  function pickedDays() { return S.pkg && !isNightly() ? 1 : S.nights; }
+  function nights() { return isNightly() ? (S.alt ? 1 : S.nights) : 0; }
+  function pickedDays() { return S.alt || (S.pkg && !isNightly()) ? 1 : S.nights; }
   function outDay() { return S.inDay && nights() ? addDays(S.inDay, S.nights) : ''; }
   function pkgNow() { return S.pkg; }
   function stayHours() {
@@ -328,9 +362,10 @@ button,input,select{font:inherit}
   }
   function stayAt(hm) { var s0 = ms(S.inDay, hm); return { s: s0, e: s0 + stayHours() * HOUR }; }
 
-  function price() {
+  function price(tierArg) {
     var r = rateOf(pkgNow()); if (!r) return null;
-    var base = S.tier === 4 ? r.rate_3_4_pax : r.rate_1_2_pax, units = Math.max(1, nights());
+    var tier = tierArg || S.tier;
+    var base = tier === 4 ? r.rate_3_4_pax : r.rate_1_2_pax, units = Math.max(1, nights());
     var t = { base: base, units: units, nightly: nights() > 0, lines: [], stay: 0, disc: 0, promoName: '', pcts: {} };
     for (var i = 0; i < units; i++) {
       var day = addDays(S.inDay, i), pr = promoFor(day), pct = pr ? pr.percent_off : 0, d = Math.round(base * pct / 100);
@@ -338,7 +373,7 @@ button,input,select{font:inherit}
       if (pr && !t.promoName) t.promoName = pr.name;
     }
     var keys = Object.keys(t.pcts); t.pct = keys.length === 1 ? +keys[0] : null;
-       // staying over: the hours between each 22-hour night (24 - 22 = 2) are paid like extra hours
+    // staying over: the hours between each 22-hour night (24 - 22 = 2) are paid like extra hours
     t.stayHrs = nights() > 1 ? (nights() - 1) * (24 - r.hours) : 0;
     t.stayTotal = t.stayHrs * cfg.extra_hour_rate;
     t.extras = S.extra * cfg.extra_hour_rate; t.deposit = cfg.deposit;
@@ -421,7 +456,7 @@ button,input,select{font:inherit}
   function stepOk(n) {
     if (n === 1) return !!S.inDay;
     if (n === 2) return !!(S.pkg && S.tier && S.time && timeOk(S.time));
-    if (n === 3) return S.guests.length === S.pax && S.guests.every(function (g) { return g.name.trim().length >= 2 && g.file && g.file.data; });
+    if (n === 3) return S.guests.length === S.pax && !guestsMissing();
     if (n === 4) return /^[a-z0-9._%+-]+@gmail\.com$/i.test(S.email.trim()) && S.agree;
     return false;
   }
@@ -451,7 +486,7 @@ button,input,select{font:inherit}
     return '<div class="navrow">' + back + next + '</div>';
   }
 
-    function stepDate() {
+  function stepDate() {
     var y = S.y, m = S.m, key = monthKey(y, m);
     var first = new Date(Date.UTC(y, m, 1)).getUTCDay(), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
     var loaded = !!blocksByMonth[key], od = outDay(), last = S.inDay ? addDays(S.inDay, pickedDays() - 1) : '';
@@ -476,7 +511,7 @@ button,input,select{font:inherit}
     }
     var sel = '';
     if (S.inDay) {
-    var n = pickedDays();
+      var n = pickedDays();
       sel = '<div class="selbar"><span>Check-in <b>' + shortDay(S.inDay) + '</b></span>' +
         (od ? '<span>Check-out <b>' + shortDay(od) + '</b></span>' : '') +
         '<span><b>' + (n > 1 ? n + ' nights' : od ? '1 night' : S.pkg ? '10-hour stay' : '1 date picked') + '</b></span>' +
@@ -508,7 +543,7 @@ button,input,select{font:inherit}
   }
 
   function timeMsg() {
-    if (!S.pkg || !S.tier) return '<div class="tmsg">Choose a package above, then your check-in time.</div>';
+    if (!S.pkg || !S.tier) return '<div class="tmsg">' + (S.alt ? 'Choose the hours and guests above' : 'Choose 2 or 4 pax above') + ', then your check-in time.</div>';
     if (!S.time) return '<div class="tmsg">Type a time or use the arrows (on the hour or half hour).</div>';
     var mm = +S.time.slice(3);
     if (mm % step()) return '<div class="tmsg bad">Please use :00 or :30.</div>';
@@ -522,76 +557,175 @@ button,input,select{font:inherit}
     return msg + '</div>';
   }
 
-    function stepTime() {
-    var nightly = isNightly(), n = nights(), pr0 = promoFor(S.inDay);
-    var cards = '';
-    cfg.rates.forEach(function (r) {
-      [2, 4].forEach(function (tier) {
-        if (tier === 4 && (cfg.max_pax || 4) < 3) return;
-        var base = tier === 4 ? r.rate_3_4_pax : r.rate_1_2_pax, pct = pr0 ? pr0.percent_off : 0;
-        var on = S.pkg === r.package && S.tier === tier;
-        cards += '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" data-tier="' + tier + '" aria-pressed="' + on + '">' +
-          '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px">' +
-          '<span class="t" style="white-space:nowrap">' + r.hours + ' hours</span>' +
-          '<span style="background:' + (on ? '#12100E' : '#C9A96E') + ';color:' + (on ? '#C9A96E' : '#12100E') + ';border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;letter-spacing:.08em;white-space:nowrap">' + tier + ' PAX</span></div>' +
-          '<div class="p" style="margin-top:10px">' + peso(base * (100 - pct) / 100) + (r.hours >= 20 ? '<span style="font-size:14px;font-family:Jost,sans-serif;font-weight:400;color:#6B6157"> /night</span>' : '') + '</div>' +
-          (pct ? '<s style="margin:0">' + peso(base) + '</s>' : '') + '</button>';
-      });
-    });
-    var nightBox = '';
-    if (nightly) {
-      var p = S.tier ? price() : null, line = '';
-      if (p) {
-        line = p.pct !== null
-          ? n + (n > 1 ? ' nights' : ' night') + ' × ' + peso(p.base * (100 - p.pct) / 100) + ' = <b>' + peso(p.stay - p.disc) + '</b>'
-          : n + (n > 1 ? ' nights' : ' night') + ' = <b>' + peso(p.stay - p.disc) + '</b>';
-      }
-      nightBox = '<span class="label">Nights</span>' +
-        '<div class="stepper"><button type="button" class="round" data-act="nminus" aria-label="Fewer nights"' + (n > 1 ? '' : ' disabled') + '>−</button>' +
-        '<output aria-live="polite">' + n + (n > 1 ? ' nights' : ' night') + '</output>' +
-        '<button type="button" class="round" data-act="nplus" aria-label="More nights"' + (n < MAX_NIGHTS ? '' : ' disabled') + '>+</button></div>' +
-        (line ? '<p style="margin:10px 0 0;font-size:15px">' + line + '</p>' : '') +
-        (p && p.stayHrs ? '<p style="margin:4px 0 0;font-size:15px">Stay-over ' + p.stayHrs + ' hrs × ' + peso(cfg.extra_hour_rate) + ' = <b>' + peso(p.stayTotal) + '</b></p>' : '') +
-        (p ? '<p style="margin:4px 0 0;font-size:15px">Security deposit (refundable) = <b>' + peso(p.deposit) + '</b></p>' : '');
-    } else if (S.pkg && S.tier) {
-      var p10 = price();
-      nightBox = '<p style="margin:14px 0 0;font-size:15px">' + rateOf(S.pkg).hours + ' hours = <b>' + peso(p10.stay - p10.disc) + '</b></p>' +
-        '<p style="margin:4px 0 0;font-size:15px">Security deposit (refundable) = <b>' + peso(p10.deposit) + '</b></p>';
-    }
-    var extra = '<span class="label">Extra hours · ' + peso(cfg.extra_hour_rate) + ' each</span>' +
-      '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
-      '<output aria-live="polite">' + S.extra + ' hr' + (S.extra === 1 ? '' : 's') + '</output>' +
-      '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < MAX_EXTRA ? '' : ' disabled') + '>+</button></div>' +
-      (S.extra ? '<p style="margin:10px 0 0;font-size:15px">' + S.extra + ' × ' + peso(cfg.extra_hour_rate) + ' = <b>' + peso(S.extra * cfg.extra_hour_rate) + '</b></p>' : '');
-    var time = '<label class="label" for="tin">Check-in time on ' + niceDay(S.inDay) + '</label>' +
+  // ---------- step 2: package & time ----------
+  function nightWord(n) { return n + (n === 1 ? ' night' : ' nights'); }
+  function tiers() { return (cfg.max_pax || 4) < 3 ? [2] : [2, 4]; }
+  function stepTime() { return S.alt ? stepShort() : stepNights(); }
+
+  // Main screen: the nights picked on the calendar. The guest only picks 2 or 4 pax.
+  function stepNights() {
+    var n = S.nights, pk = nightlyPkg(), od = outDay();
+    var cards = tiers().map(function (tier) {
+      var p = price(tier), on = S.tier === tier;
+      var per = p.pct !== null ? p.base * (100 - p.pct) / 100 : p.base;
+      return '<button type="button" class="pkg" data-pkg="' + esc(pk) + '" data-tier="' + tier + '" aria-pressed="' + on + '">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="t">' + tier + ' pax</span>' +
+        (on ? '<span style="background:#12100E;color:#C9A96E;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600">✓ Chosen</span>' : '') + '</div>' +
+        '<div class="d">' + (tier === 4 ? '3 to 4 guests' : '1 to 2 guests') + '</div>' +
+        '<div class="p">' + peso(per) + '<span style="font-size:14px;font-family:Jost,sans-serif;font-weight:400;color:#6B6157"> /night</span>' +
+        (p.pct ? '<s>' + peso(p.base) + '</s>' : '') + '</div>' +
+        '<div class="tot">' + nightWord(n) + ': <b>' + peso(p.stay - p.disc + p.stayTotal) + '</b></div></button>';
+    }).join('');
+    var stepper = '<span class="label">Nights</span>' +
+      '<div class="stepper"><button type="button" class="round" data-act="nminus" aria-label="Fewer nights"' + (n > 1 ? '' : ' disabled') + '>−</button>' +
+      '<output aria-live="polite">' + nightWord(n) + '</output>' +
+      '<button type="button" class="round" data-act="nplus" aria-label="More nights"' + (n < MAX_NIGHTS ? '' : ' disabled') + '>+</button></div>';
+    var hasShort = cfg.rates.some(function (r) { return r.hours < 20; });
+    var alt = (n > 1 || hasShort) ? '<button type="button" class="altlink" data-act="alt">' +
+      (n > 1 ? 'Only need 22 hours or 10 hours? <b>Choose a shorter stay →</b>' : 'Just a day stay? <b>Choose 10 hours instead →</b>') + '</button>' : '';
+    return '<h2 style="margin-bottom:10px">Package &amp; time</h2>' +
+      '<div class="staybar"><span>Check-in <b>' + shortDay(S.inDay) + '</b></span>' + (od ? '<span>Check-out <b>' + shortDay(od) + '</b></span>' : '') + '<span><b>' + nightWord(n) + '</b></span></div>' +
+      '<span class="label" style="margin-top:0">How many guests?</span>' +
+      '<div class="pkgs">' + cards + '</div>' + alt + stepper + timeBox() + extraBox() + breakdown();
+  }
+
+  // Second screen: a shorter stay (10 hours, or one 22-hour night) on the check-in date.
+  function stepShort() {
+    var pr0 = promoFor(S.inDay), pct = pr0 ? pr0.percent_off : 0;
+    var list = cfg.rates.filter(function (r) { return S.nights > 1 || r.hours < 20; });
+    var groups = list.map(function (r) {
+      var cards = tiers().map(function (tier) {
+        var base = tier === 4 ? r.rate_3_4_pax : r.rate_1_2_pax, on = S.pkg === r.package && S.tier === tier;
+        return '<button type="button" class="pkg" data-pkg="' + esc(r.package) + '" data-tier="' + tier + '" aria-pressed="' + on + '">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="t">' + tier + ' pax</span>' +
+          (on ? '<span style="background:#12100E;color:#C9A96E;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600">✓ Chosen</span>' : '') + '</div>' +
+          '<div class="d">' + (tier === 4 ? '3 to 4 guests' : '1 to 2 guests') + '</div>' +
+          '<div class="p">' + peso(base * (100 - pct) / 100) + (pct ? '<s>' + peso(base) + '</s>' : '') + '</div></button>';
+      }).join('');
+      return '<div class="pkghead">' + r.hours + ' hours · ' + (r.hours >= 20 ? 'overnight (1 night only)' : 'day stay') + '</div><div class="pkgs">' + cards + '</div>';
+    }).join('');
+    var back = S.nights > 1 ? '← Back to my ' + nightWord(S.nights) : '← Back to overnight stay';
+    return '<button type="button" class="backlink" data-act="unalt">' + back + '</button>' +
+      '<h2 style="margin-bottom:6px">Shorter stay</h2>' +
+      '<p class="sub" style="margin-bottom:14px">One check-in date: <b>' + niceDay(S.inDay) + '</b>. Choose the hours and the number of guests.</p>' +
+      groups + timeBox() + extraBox() + breakdown();
+  }
+
+  function timeBox() {
+    return '<label class="label" for="tin">Check-in time on ' + niceDay(S.inDay) + '</label>' +
       '<div class="timebox"><button type="button" class="round" data-act="tdown" aria-label="30 minutes earlier">−</button>' +
       '<input type="time" id="tin" step="' + (step() * 60) + '" value="' + esc(S.time) + '"' + (S.pkg && S.tier && S.time && !timeOk(S.time) ? ' class="bad"' : '') + '>' +
       '<button type="button" class="round" data-act="tup" aria-label="30 minutes later">+</button></div>' +
       '<div id="tmsg">' + timeMsg() + '</div>';
-    var pt = S.pkg && S.tier ? price() : null;
-    var total = pt ? '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:22px;padding-top:14px;border-top:1px solid #E2D6C2"><span style="font-size:13px;letter-spacing:.2em;text-transform:uppercase">Total</span><span style="font-family:\'Cormorant Garamond\',serif;font-size:32px;font-weight:600">' + peso(pt.total) + '</span></div>' : '';
-    return '<h2 style="margin-bottom:18px">Package &amp; time</h2>' +
-      '<div class="pkgs">' + cards + '</div>' + nightBox + time + extra + total;
+  }
+  function extraBox() {
+    return '<span class="label">Extra hours · ' + peso(cfg.extra_hour_rate) + ' each</span>' +
+      '<div class="stepper"><button type="button" class="round" data-act="exminus" aria-label="Fewer extra hours"' + (S.extra ? '' : ' disabled') + '>−</button>' +
+      '<output aria-live="polite">' + S.extra + ' hr' + (S.extra === 1 ? '' : 's') + '</output>' +
+      '<button type="button" class="round" data-act="explus" aria-label="More extra hours"' + (S.extra < MAX_EXTRA ? '' : ' disabled') + '>+</button></div>';
+  }
+  // The full computation, shown once 2 or 4 pax is chosen.
+  function breakdown() {
+    if (!S.pkg || !S.tier) return '';
+    var p = price(), r = rateOf(S.pkg);
+    var row = function (a, b, cls) { return '<div class="r' + (cls ? ' ' + cls : '') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
+    var rows = row((p.nightly ? nightWord(p.units) + ' × ' + peso(p.base) : r.hours + ' hours') + ' <span style="color:#6B6157">(' + S.tier + ' pax)</span>', peso(p.stay));
+    if (p.disc) rows += row((p.pct ? p.pct + '% off' : 'Promo') + (p.promoName ? ' · ' + esc(p.promoName) : ''), '−' + peso(p.disc), 'disc');
+    if (p.stayHrs) rows += row('Stay-over between nights (' + p.stayHrs + ' hrs × ' + peso(cfg.extra_hour_rate) + ')', peso(p.stayTotal));
+    if (p.extras) rows += row('Extra hours (' + S.extra + ' × ' + peso(cfg.extra_hour_rate) + ')', peso(p.extras));
+    rows += row('Security deposit (refundable)', peso(p.deposit));
+    rows += row('Total', peso(p.total), 'tot');
+    return '<span class="label">Your price</span><div class="bk">' + rows + '</div>';
   }
 
+  // ---------- step 3: guests & IDs ----------
+  var ID_TYPES = ['PhilSys National ID', 'Driver\'s License', 'Passport', 'UMID', 'SSS ID', 'PRC ID', 'Postal ID', 'Voter\'s ID', 'PhilHealth ID',
+    'Senior Citizen ID', 'PWD ID', 'School ID', 'Company ID', 'Other'];
+  function ageText(v, unit) { var n = +v; return n + ' ' + (unit === 'months' ? (n === 1 ? 'month' : 'months') : (n === 1 ? 'year' : 'years')) + ' old'; }
+  function ageOk(v, unit, baby) {
+    v = String(v == null ? '' : v).trim(); if (!/^\d{1,2}$/.test(v)) return false;
+    var n = +v;
+    if (unit === 'months') return n >= 0 && n <= (baby ? 24 : 35);
+    return n >= 1 && n <= (baby ? 2 : 17);
+  }
+  function idTypeOf(g) { return g.idType === 'Other' ? g.idOther.trim() : g.idType; }
+  // The first thing still missing on the guests step ('' = all done).
+  function guestsMissing() {
+    for (var i = 0; i < S.guests.length; i++) {
+      var g = S.guests[i], who = 'Guest ' + (i + 1);
+      if (g.name.trim().length < 2) return who + ': type the full name.';
+      if (g.kind === 'child' && i > 0) { if (!ageOk(g.age, g.unit)) return who + ': type the child\'s age (years or months).'; continue; }
+      if (!g.idType) return who + ': choose the type of ID.';
+      if (g.idType === 'Other' && g.idOther.trim().length < 2) return who + ': type the name of the ID.';
+      if (!(g.file && g.file.data)) return who + ': upload a photo of the ID.';
+    }
+    if (S.baby) {
+      if (S.babyName.trim().length < 2) return 'Baby: type the baby\'s full name.';
+      if (!ageOk(S.babyAge, S.babyUnit, true)) return 'Baby: type the baby\'s age (2 years old and below).';
+    }
+    return '';
+  }
+  function ageFields(key, val, unit, baby) {
+    return '<div class="agebox"><label class="sr" for="' + key + 'a">Age</label>' +
+      '<input class="inp" id="' + key + 'a" data-age="' + key + '" inputmode="numeric" maxlength="2" placeholder="Age" value="' + esc(val) + '">' +
+      '<label class="sr" for="' + key + 'u">Years or months</label><select class="inp" id="' + key + 'u" data-unit="' + key + '">' +
+      '<option value="years"' + (unit === 'years' ? ' selected' : '') + '>years old</option><option value="months"' + (unit === 'months' ? ' selected' : '') + '>months old</option></select></div>';
+  }
+  function idPreview(g, i) {
+    if (!g.file) return '';
+    if (g.file.error) return '<p class="ghint" style="color:#9A3B2E">' + esc(g.file.error) + '</p>';
+    if (g.file.busy) return '<p class="ghint">Preparing the ID…</p>';
+    var pic = g.file.mime === 'application/pdf' ? '<span class="pdf">PDF</span>' :
+      '<button type="button" data-gview="' + i + '" aria-label="View the ID of guest ' + (i + 1) + '"><img src="' + g.file.thumb + '" alt=""></button>';
+    return '<div class="idprev">' + pic + '<div class="idcap"><b data-gcap="' + i + '">' + esc(g.name.trim() || 'Guest ' + (i + 1)) + '</b>' +
+      '<span data-gtcap="' + i + '">' + esc(idTypeOf(g) || 'ID type not chosen yet') + '</span><br><span class="ok">✓ ' + esc(g.file.label) + '</span></div></div>';
+  }
   function stepGuests() {
     var lo = S.tier === 4 ? 3 : 1, hi = S.tier === 4 ? Math.min(4, cfg.max_pax || 4) : 2, chips = '';
     for (var i = lo; i <= hi; i++) chips += '<button type="button" class="chip" data-pax="' + i + '" aria-pressed="' + (S.pax === i) + '">' + i + (i === 1 ? ' guest' : ' guests') + '</button>';
     var list = S.guests.map(function (g, i) {
-      var st = g.file ? (g.file.error ? '<span class="fs">' + esc(g.file.error) + '</span>' : g.file.busy ? '<span class="fs">Preparing…</span>' :
-        (g.file.thumb ? '<img src="' + g.file.thumb + '" alt="">' : '') + '<span class="fs ok">✓ ' + esc(g.file.label) + '</span>') : '<span class="fs">No ID yet</span>';
+      var child = g.kind === 'child' && i > 0;
+      var kind = i === 0 ? '' : '<div class="kind" role="group" aria-label="Guest ' + (i + 1) + ' ID">' +
+        '<button type="button" class="chip" data-gkind="' + i + '" data-k="id" aria-pressed="' + !child + '">Has a valid ID</button>' +
+        '<button type="button" class="chip" data-gkind="' + i + '" data-k="child" aria-pressed="' + child + '">Child with no ID</button></div>';
+      var body;
+      if (child) {
+        body = '<span class="label" style="margin:14px 0 0">How old is this child?</span>' + ageFields('g' + i, g.age, g.unit) +
+          '<p class="ghint">Please write the age in years, or in months if below 1 year old.</p>';
+      } else {
+        var opts = '<option value="">Type of ID…</option>' + ID_TYPES.map(function (t) { return '<option' + (g.idType === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('');
+        body = '<label class="sr" for="gt' + i + '">Type of ID of guest ' + (i + 1) + '</label>' +
+          '<select class="inp" id="gt' + i + '" data-gtype="' + i + '" style="margin-top:10px">' + opts + '</select>' +
+          (g.idType === 'Other' ? '<input class="inp" data-gother="' + i + '" placeholder="Name of the ID (e.g. Barangay ID)" value="' + esc(g.idOther) + '" style="margin-top:8px">' : '') +
+          '<div class="file"><label for="gf' + i + '">' + (g.file && g.file.data ? 'Change ID photo' : 'Upload ID photo') + '</label>' +
+          '<input type="file" id="gf' + i + '" data-gfile="' + i + '" accept="image/*,application/pdf">' + (g.file && g.file.data ? '' : '<span class="fs">Photo or PDF of the front of the ID</span>') + '</div>' +
+          idPreview(g, i);
+      }
       return '<div class="guest"><div class="gh">Guest ' + (i + 1) + (i === 0 ? ' · main guest' : '') + '</div>' +
         '<label class="sr" for="gn' + i + '">Full name of guest ' + (i + 1) + '</label>' +
-        '<input class="inp" id="gn' + i + '" data-gname="' + i + '" autocomplete="' + (i === 0 ? 'name' : 'off') + '" placeholder="Full name (as on ID)" value="' + esc(g.name) + '">' +
-        '<div class="file"><label for="gf' + i + '">' + (g.file && g.file.data ? 'Change ID' : 'Upload ID') + '</label>' +
-        '<input type="file" id="gf' + i + '" data-gfile="' + i + '" accept="image/*,application/pdf">' + st + '</div></div>';
+        '<input class="inp" id="gn' + i + '" data-gname="' + i + '" autocomplete="' + (i === 0 ? 'name' : 'off') + '" placeholder="' + (child ? 'Full name of the child' : 'Full name (as on ID)') + '" value="' + esc(g.name) + '">' +
+        kind + body + '</div>';
     }).join('');
     var babyOk = (cfg.max_babies || 0) > 0;
-    return '<h2>Who is coming?</h2><p class="sub">Your package is for ' + (S.tier === 4 ? '3–4' : '1–2') + ' guests. Kids above 2 years old count as 1 guest. No extra guests.</p>' +
-      '<div class="paxrow" role="group" aria-label="Number of guests">' + chips + '</div>' +
-      (babyOk ? '<label class="check"><input type="checkbox" data-act="baby"' + (S.baby ? ' checked' : '') + '>Bringing a baby aged 2 or under (free, not counted, no ID needed)</label>' : '') +
+    var baby = !babyOk ? '' : '<label class="check"><input type="checkbox" data-act="baby"' + (S.baby ? ' checked' : '') + '>Bringing a baby aged 2 years old or below (free, not counted, no ID needed)</label>' +
+      (S.baby ? '<div class="babybox"><div class="gh" style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#7A5A2E;margin-bottom:8px">Baby</div>' +
+        '<label class="sr" for="bn">Full name of the baby</label><input class="inp" id="bn" data-bname="1" placeholder="Full name of the baby" value="' + esc(S.babyName) + '">' +
+        '<span class="label" style="margin:12px 0 0">How old is the baby?</span>' + ageFields('b', S.babyAge, S.babyUnit) +
+        '<p class="ghint">Example: 8 months old, or 2 years old.</p></div>' : '');
+    var miss = guestsMissing();
+    return '<h2>Who is coming?</h2><p class="sub">Your package is for ' + (S.tier === 4 ? '3 to 4' : '1 to 2') + ' guests. Kids above 2 years old count as 1 guest. No extra guests.</p>' +
+      '<div class="paxrow" role="group" aria-label="Number of guests">' + chips + '</div>' + baby +
       '<span class="label">Names and valid IDs</span>' + list +
-      '<p class="note">Every guest needs a valid ID (photo or PDF). IDs are kept private and deleted after your stay.</p>';
+      '<p class="miss" id="gmiss"' + (miss ? '' : ' hidden') + '>' + esc(miss) + '</p>' +
+      '<p class="note">Every adult needs a valid ID. A child with no ID needs their age. IDs are kept private and deleted after your stay.</p>';
+  }
+  function viewId(i) {
+    var g = S.guests[i]; if (!g || !g.file || !g.file.view) return;
+    var box = document.createElement('div'); box.id = 'idview'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'ID of guest ' + (i + 1));
+    box.innerHTML = '<p><b>' + esc(g.name.trim() || 'Guest ' + (i + 1)) + '</b> · ' + esc(idTypeOf(g) || 'ID') + '</p><img src="' + g.file.view + '" alt="ID of guest ' + (i + 1) + '">' +
+      '<button type="button" class="pill ghost" style="color:#F3ECE0;border-color:#F3ECE0">Close</button>';
+    box.addEventListener('click', function (e) { if (e.target === box || e.target.tagName === 'BUTTON') box.remove(); });
+    document.body.appendChild(box);
   }
 
   function stepDetails() {
@@ -628,6 +762,7 @@ button,input,select{font:inherit}
       '<div class="row"><span>Check-in</span><span>' + niceWhen(st.s) + '</span></div>' +
       '<div class="row"><span>Check-out</span><span>' + niceWhen(st.e) + '</span></div>' +
       '<div class="row"><span>Guests</span><span>' + S.pax + (S.baby ? ' + baby' : '') + '</span></div>' +
+      '<div class="row"><span>Package</span><span>' + (nights() ? nightWord(nights()) : rateOf(pkgNow()).hours + ' hours') + ' · ' + S.tier + ' pax</span></div>' +
       priceRows({ nightly: p.nightly, units: p.units, base: p.base, hoursLabel: rateOf(pkgNow()).hours + '-hour', pax: S.pax, stay: p.stay, disc: p.disc, pct: p.pct, promoName: p.promoName,
       stayHrs: p.stayHrs, stayTotal: p.stayTotal, extras: p.extras, extraHours: S.extra, deposit: p.deposit, total: p.total }) + '</div></div>';
   }
@@ -656,7 +791,6 @@ button,input,select{font:inherit}
   }
 
   // ---------- ticket image ----------
-    // ---------- ticket image ----------
   function ticketPng() {
     var t = S.ticket, p = t.price, W = 1080;
     var H = 1562 - (p.discount ? 0 : 62) - (p.stayover_total ? 0 : 62) - (p.extras_total ? 0 : 62), c = document.createElement('canvas');
@@ -765,7 +899,7 @@ button,input,select{font:inherit}
     if (file.type === 'application/pdf') {
       if (file.size > 4.5 * 1024 * 1024) return done({ error: 'PDF is too big (max 4.5 MB). Try a photo instead.' });
       var fr = new FileReader();
-      fr.onload = function () { done({ data: String(fr.result).split(',')[1], mime: 'application/pdf', label: 'PDF ready' }); };
+      fr.onload = function () { done({ data: String(fr.result).split(',')[1], mime: 'application/pdf', label: 'PDF ready · ' + (file.name || 'ID.pdf') }); };
       fr.onerror = function () { done({ error: 'Could not read that file. Please try again.' }); };
       fr.readAsDataURL(file);
       return;
@@ -776,24 +910,24 @@ button,input,select{font:inherit}
       var c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       var dataUrl = c.toDataURL('image/jpeg', 0.82);
-      var t = document.createElement('canvas'), ts = 60 / Math.max(c.width, c.height); t.width = c.width * ts; t.height = c.height * ts;
+      var t = document.createElement('canvas'), ts = Math.min(1, 240 / Math.max(c.width, c.height)); t.width = Math.round(c.width * ts); t.height = Math.round(c.height * ts);
       t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
       URL.revokeObjectURL(url);
-      done({ data: dataUrl.split(',')[1], mime: 'image/jpeg', label: 'ID photo ready', thumb: t.toDataURL('image/jpeg', .7) });
+      done({ data: dataUrl.split(',')[1], mime: 'image/jpeg', label: 'ID photo ready', thumb: t.toDataURL('image/jpeg', .75), view: dataUrl });
     };
     img.onerror = function () { URL.revokeObjectURL(url); done({ error: 'Please upload a JPG, PNG or PDF.' }); };
     img.src = url;
   }
   function syncGuests() {
-    while (S.guests.length < S.pax) S.guests.push({ name: '', file: null });
+    while (S.guests.length < S.pax) S.guests.push({ name: '', kind: 'id', idType: '', idOther: '', file: null, age: '', unit: 'years' });
     S.guests.length = S.pax;
   }
 
   // ---------- events ----------
-   function pickDay(day) {
-       if (!S.inDay) { S.inDay = day; S.nights = 1; return; }
+  function pickDay(day) {
+    if (!S.inDay) { S.inDay = day; S.nights = 1; S.alt = false; return; }
     var cur = pickedDays(), first = S.inDay, last = addDays(first, cur - 1);
-    if (day === first && cur === 1) { S.inDay = ''; S.nights = 1; return; }       // un-pick the only date
+    if (day === first && cur === 1) { S.inDay = ''; S.nights = 1; S.alt = false; return; }       // un-pick the only date
     if (day === first) { S.inDay = addDays(first, 1); S.nights = cur - 1; return; } // remove first night
     if (day === last) { S.nights = cur - 1; return; }                             // remove last night
     if (day > first && day < last) { S.nights = daysBetween(first, day); return; }       // remove this date and after
@@ -803,13 +937,13 @@ button,input,select{font:inherit}
       if (adjacent) { S.error = 'The longest stay is ' + MAX_NIGHTS + ' nights. For longer stays, please message us.'; return; }
       S.inDay = day; S.nights = 1; return;                                               // far away: start again
     }
-    var keep = { inDay: S.inDay, nights: S.nights, pkg: S.pkg, extra: S.extra };
-    S.inDay = nf; S.nights = n; S.extra = 0;
-    if (!isNightly()) S.pkg = nightlyPkg();
+    var keep = { inDay: S.inDay, nights: S.nights, pkg: S.pkg, extra: S.extra, alt: S.alt };
+    S.inDay = nf; S.nights = n; S.extra = 0; S.alt = false;
+    S.pkg = nightlyPkg();
     var fits = loadedFor(nf, addDays(nl, 1)) ? nextOk('00:00') : 'unknown';
     S.extra = keep.extra;
     if (!fits) {
-      S.inDay = keep.inDay; S.nights = keep.nights; S.pkg = keep.pkg;
+      S.inDay = keep.inDay; S.nights = keep.nights; S.pkg = keep.pkg; S.alt = keep.alt;
       S.error = 'Sorry, some of those nights are already booked. Please pick other dates.';
       return;
     }
@@ -837,7 +971,9 @@ button,input,select{font:inherit}
     var el = e.target.closest('button, [data-act]'); if (!el || el.disabled) return;
     var d = el.dataset;
     S.error = ''; S.note = '';
-    if (d.go) { S.step = +d.go; render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); return; }
+    if (d.gview) { viewId(+d.gview); return; }
+    if (d.gkind) { var gk = S.guests[+d.gkind]; gk.kind = d.k; render(); return; }
+    if (d.go) { S.step = +d.go; if (S.step === 2 && !S.alt) S.pkg = nightlyPkg(); if (S.step === 3) syncGuests(); render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); return; }
     if (d.day) { pickDay(d.day); render(); loadSpan().then(render); return; }
     if (d.pkg) {
       S.pkg = d.pkg; S.tier = +d.tier;
@@ -850,7 +986,9 @@ button,input,select{font:inherit}
     switch (d.act) {
       case 'prev': S.m--; if (S.m < 0) { S.m = 11; S.y--; } monthChanged(); break;
       case 'nextm': S.m++; if (S.m > 11) { S.m = 0; S.y++; } monthChanged(); break;
-      case 'clear': S.inDay = ''; S.nights = 1; S.outPicked = false; S.time = ''; render(); break;
+      case 'clear': S.inDay = ''; S.nights = 1; S.alt = false; S.outPicked = false; S.time = ''; render(); break;
+      case 'alt': S.alt = true; S.pkg = ''; render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); break;
+      case 'unalt': S.alt = false; S.pkg = nightlyPkg(); render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' }); break;
       case 'nminus': S.nights = Math.max(1, S.nights - 1); S.outPicked = true; render(); break;
       case 'nplus': S.nights = Math.min(MAX_NIGHTS, S.nights + 1); S.outPicked = true; render(); break;
       case 'tdown': shiftTime(-1); break;
@@ -861,6 +999,7 @@ button,input,select{font:inherit}
         if (stepOk(S.step)) {
           S.step++;
           if (S.step === 2 && !S.time) S.time = '14:00';
+          if (S.step === 2 && !S.alt) S.pkg = nightlyPkg();
           if (S.step === 3) syncGuests();
           render(); window.scrollTo({ top: app.offsetTop - 10, behavior: 'smooth' });
         }
@@ -868,12 +1007,14 @@ button,input,select{font:inherit}
       case 'back': S.step--; render(); break;
       case 'submit': submit(); break;
       case 'save': saveTicket(); break;
-      case 'again': S.ticket = null; S.step = 1; S.inDay = ''; S.nights = 1; S.outPicked = false; S.pkg = ''; S.tier = 0; S.extra = 0; S.time = ''; S.agree = false; S.guests = []; blocksByMonth = {}; monthChanged(); break;
+      case 'again': S.ticket = null; S.step = 1; S.inDay = ''; S.nights = 1; S.alt = false; S.baby = false; S.babyName = ''; S.babyAge = ''; S.outPicked = false; S.pkg = ''; S.tier = 0; S.extra = 0; S.time = ''; S.agree = false; S.guests = []; blocksByMonth = {}; monthChanged(); break;
     }
   });
   app.addEventListener('change', function (e) {
     var el = e.target, d = el.dataset;
-    if (d.act === 'baby') { S.baby = el.checked; return; }
+    if (d.act === 'baby') { S.baby = el.checked; render(); return; }
+    if (d.gtype != null) { S.guests[+d.gtype].idType = el.value; render(); return; }
+    if (d.unit != null) { if (d.unit === 'b') S.babyUnit = el.value; else S.guests[+d.unit.slice(1)].unit = el.value; refreshNav(); return; }
     if (d.act === 'agree') { S.agree = el.checked; render(); return; }
     if (d.gfile != null) readId(+d.gfile, el.files && el.files[0]);
     if (el.id === 'tin') setTime(el.value);
@@ -881,7 +1022,21 @@ button,input,select{font:inherit}
   app.addEventListener('input', function (e) {
     var el = e.target;
     if (el.id === 'tin') { setTime(el.value); return; }
-    if (el.dataset.gname != null) { S.guests[+el.dataset.gname].name = el.value; refreshNav(); }
+    var dd = el.dataset;
+    if (dd.gname != null) {
+      S.guests[+dd.gname].name = el.value; refreshNav();
+      var cap = app.querySelector('[data-gcap="' + dd.gname + '"]'); if (cap) cap.textContent = el.value.trim() || 'Guest ' + (+dd.gname + 1);
+    }
+    if (dd.gother != null) {
+      S.guests[+dd.gother].idOther = el.value; refreshNav();
+      var tc = app.querySelector('[data-gtcap="' + dd.gother + '"]'); if (tc) tc.textContent = el.value.trim() || 'Other ID';
+    }
+    if (dd.age != null) {
+      el.value = el.value.replace(/\D/g, '').slice(0, 2);
+      if (dd.age === 'b') S.babyAge = el.value; else S.guests[+dd.age.slice(1)].age = el.value;
+      refreshNav();
+    }
+    if (dd.bname != null) { S.babyName = el.value; refreshNav(); }
     if (el.id === 'em') {
       S.email = el.value; refreshNav();
       var h = document.getElementById('emhint');
@@ -892,6 +1047,8 @@ button,input,select{font:inherit}
     var nr = app.querySelector('.navrow'); if (!nr) return;
     var tmp = document.createElement('div'); tmp.innerHTML = navRow(); nr.replaceWith(tmp.firstChild);
     app.querySelectorAll('.steps button').forEach(function (b) { b.disabled = !canGo(+b.dataset.go); });
+    var gm = document.getElementById('gmiss');
+    if (gm) { var m = guestsMissing(); gm.textContent = m; gm.hidden = !m; }
   }
 
   function monthChanged() {
@@ -907,8 +1064,12 @@ button,input,select{font:inherit}
     postJSON({
       action: 'createBooking', website: hp ? hp.value : '',
       guest_email: S.email.trim(), pax: S.pax, baby: S.baby, check_in: S.inDay + 'T' + S.time,
+      baby_name: S.baby ? S.babyName.trim() : '', baby_age: S.baby ? ageText(S.babyAge, S.babyUnit) : '',
       package: pkgNow(), nights: nights(), extra_hours: S.extra, agree: S.agree,
-      guests: S.guests.map(function (g) { return { full_name: g.name.trim(), id: { name: 'id', mime: g.file.mime, data: g.file.data } }; })
+      guests: S.guests.map(function (g, i) {
+        if (g.kind === 'child' && i > 0) return { full_name: g.name.trim(), no_id: true, age: ageText(g.age, g.unit) };
+        return { full_name: g.name.trim(), id_type: idTypeOf(g), id: { name: 'id', mime: g.file.mime, data: g.file.data } };
+      })
     }).then(function (t) {
       S.busy = false; S.ticket = t; render();
     }).catch(function (err) {

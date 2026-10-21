@@ -387,9 +387,10 @@ function detail() {
   var refundAmt = Math.max(0, b.deposit - (Number(S.dep.deduction) || 0));
   var depStatus = dep.refunded_at ? 'Returned' : dep.photo_ok && dep.items_ok ? 'Ready to return' : 'Held';
   var gaps = b.guests.map(function (g) {
-    return '<div class="g"><span>' + esc(g.name) + (g.no === 1 ? ' <small style="color:var(--muted)">(main)</small>' : '') + '</span>' +
-      (g.has_id ? '<button type="button" class="linkbtn" data-id="' + g.no + '">View ID</button>' : '<small style="color:var(--muted)">ID deleted</small>') + '</div>';
-  }).join('');
+  return '<div class="g"><span>' + esc(g.name) + (g.no === 1 ? ' <small style="color:var(--muted)">(main)</small>' : '') +
+    (g.child_age ? '<br><small style="color:var(--muted)">Child, no ID · ' + esc(g.child_age) + '</small>' : g.id_type ? '<br><small style="color:var(--muted)">' + esc(g.id_type) + '</small>' : '') + '</span>' +
+    (g.has_id ? '<button type="button" class="linkbtn" data-id="' + g.no + '">View ID</button>' : '<small style="color:var(--muted)">' + (g.child_age ? 'No ID' : 'ID deleted') + '</small>') + '</div>';
+  }).join('') + (b.baby_info ? '<div class="g"><span>' + esc(b.baby_info.split(' · ')[0]) + '<br><small style="color:var(--muted)">Baby · ' + esc(b.baby_info.split(' · ')[1] || '') + '</small></span><small style="color:var(--muted)">Free</small></div>' : '');
   return '<section class="panel detail" id="detail" aria-label="Booking ' + esc(b.ref) + '">' +
     '<div><div class="k2">' + esc(b.ref) + ' · ' + plural(b.pax, 'guest') + (b.baby ? ' + baby' : '') + ' <span class="st ' + esc(b.status) + '" style="margin-left:6px">' + esc(b.status) + '</span></div>' +
     '<h2 class="h" style="font-size:26px;margin-top:6px">' + esc(lead(b)) + '</h2></div>' +
