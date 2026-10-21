@@ -15,7 +15,9 @@
     '#lchat .lc-head b{display:block;font-family:"Cormorant Garamond",Georgia,serif;font-size:22px;font-weight:500;line-height:1}' +
     '#lchat .lc-head small{display:block;color:#B9AE9F;font-size:12px;margin-top:3px}' +
     '#lchat .lc-x{margin-left:auto;background:none;border:1px solid rgba(243,236,224,.35);color:#F3ECE0;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px}' +
-    '#lchat .lc-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}' +
+    '#lchat .lc-body{position:relative;flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}' +
+    '#lchat .lc-more{padding:10px 10px 0;border-top:1px solid rgba(201,169,110,.25)}' +
+    '#lchat .lc-more select{width:100%;min-height:42px;border-radius:12px;border:1px solid rgba(201,169,110,.6);background:#1B1714;color:#F3ECE0;padding:0 12px;font-size:15px;font-family:inherit;cursor:pointer}' +
     '#lchat .lc-m{max-width:86%;padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}' +
     '#lchat .lc-bot{background:#F3ECE0;color:#2A231D;border-bottom-left-radius:4px;align-self:flex-start}' +
     '#lchat .lc-me{background:#C9A96E;color:#12100E;border-bottom-right-radius:4px;align-self:flex-end}' +
@@ -23,7 +25,7 @@
     '#lchat .lc-chips{display:flex;flex-wrap:wrap;gap:6px}' +
     '#lchat .lc-chip{border:1px solid rgba(201,169,110,.6);background:transparent;color:#F3ECE0;border-radius:999px;padding:7px 12px;font-size:12.5px;cursor:pointer;text-align:left;font-family:inherit}' +
     '#lchat .lc-chip:hover{background:rgba(201,169,110,.15)}' +
-    '#lchat form{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(201,169,110,.25)}' +
+    '#lchat form{display:flex;gap:8px;padding:10px}' +
     '#lchat input{flex:1;min-width:0;min-height:44px;border-radius:999px;border:1px solid rgba(201,169,110,.45);background:#1B1714;color:#F3ECE0;padding:0 16px;font-size:16px;font-family:inherit}' +
     '#lchat input:focus{outline:none;border-color:#C9A96E}' +
     '#lchat .lc-send{width:44px;height:44px;border-radius:50%;border:0;background:#C9A96E;color:#12100E;cursor:pointer;flex:none}' +
@@ -72,12 +74,17 @@
         '<div class="lc-head"><span style="width:40px;height:40px;border-radius:50%;background:#C9A96E;display:flex;align-items:center;justify-content:center;flex:none">' + cat + '</span><div><b>Ask Luna</b><small>Quick answers · we reply on Messenger too</small></div><button type="button" class="lc-x" aria-label="Close chat">✕</button></div>' +
         '<div class="lc-body" aria-live="polite"><div class="lc-m lc-bot">Hi! 🌙 I\'m Luna. Tap a question or type your own.</div>' + chips(FAQ.slice(0, 6)) +
         log.map(function (m) { return '<div class="lc-m lc-' + m.who + '">' + m.html + '</div>'; }).join('') +
-        (log.length ? '<div style="color:#B9AE9F;font-size:12px;margin-top:4px">More questions</div>' + chips(FAQ.slice(6)) : '') +
-        '</div><form><label for="lc-in" style="position:absolute;left:-9999px">Your question</label><input id="lc-in" autocomplete="off" placeholder="Type your question…" value="' + esc(draft) + '"><button class="lc-send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></form></div>'
+        '</div><div class="lc-more"><label for="lc-sel" style="position:absolute;left:-9999px">More questions</label><select id="lc-sel"><option value="">More questions ▾</option>' +
+        FAQ.map(function (f) { return '<option value="' + esc(f.q) + '">' + esc(f.q) + '</option>'; }).join('') + '</select></div><form><label for="lc-in" style="position:absolute;left:-9999px">Your question</label><input id="lc-in" autocomplete="off" placeholder="Type your question…" value="' + esc(draft) + '"><button class="lc-send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></form></div>'
       : '') +
       (!open && !tipShown ? '<div class="lc-tip">Questions? Ask Luna 🐾</div>' : '') +
       '<button type="button" class="lc-btn" aria-label="' + (open ? 'Close chat' : 'Open chat — ask a question') + '" aria-expanded="' + open + '">' + (open ? '<span style="font-size:22px">✕</span>' : cat) + '</button>';
-    var body = root.querySelector('.lc-body'); if (body) body.scrollTop = body.scrollHeight;
+    var body = root.querySelector('.lc-body');
+    if (body) {   // show the latest question with its answer right under it, without scrolling
+      body.style.scrollBehavior = 'auto';
+      var mine = body.querySelectorAll('.lc-me'), last = mine[mine.length - 1];
+      body.scrollTop = last ? last.offsetTop - 10 : 0;
+    }
     if (keep) root.querySelector('#lc-in').focus();
   }
   root.addEventListener('click', function (e) {
@@ -86,6 +93,9 @@
       draw(); if (open && window.innerWidth > 600) root.querySelector('#lc-in').focus(); return;
     }
     var c = e.target.closest('.lc-chip'); if (c) ask(c.dataset.q);
+  });
+  root.addEventListener('change', function (e) {
+    if (e.target.id === 'lc-sel' && e.target.value) { var v = e.target.value; e.target.value = ''; ask(v); }
   });
   root.addEventListener('submit', function (e) {
     e.preventDefault(); var i = root.querySelector('#lc-in'); var v = i.value; i.value = ''; ask(v);
