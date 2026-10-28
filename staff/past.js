@@ -46,6 +46,7 @@ function pbRate(pkg) { return pbRates().filter(function (r) { return r.package =
   detail = function () {
     var h = plainDetail(), b = S.data.bookings.filter(function (x) { return x.ref === S.open; })[0];
     if (b && isPastRef(b)) h = h.split('>ID deleted<').join('>No ID yet<');
+    if (b && b.nights > 1) h = h.replace(plural(b.nights, 'night') + ' · ' + esc(b.package) + ' · ', plural(b.nights, 'night') + ' · ');
     return h;
   };
 })();
@@ -215,13 +216,18 @@ function pbRender() {
   var stay = '';
   if (PB.mode !== 'guests') {
     var p = pbPrice() || {}, r = pbRate(PB.pkg) || {};
-    var pkgOpts = pbRates().map(function (x) { return '<option value="' + esc(x.package) + '"' + (PB.pkg === x.package ? ' selected' : '') + '>' + x.hours + ' hours</option>'; }).join('');
+    // overnight stays are counted by nights only; the hours show just for a 1-night stay or a day stay
+    var pkgBtns = pbRates().map(function (x) {
+      return '<button type="button" data-pbpk="' + esc(x.package) + '" aria-pressed="' + (PB.pkg === x.package) + '">' + (x.hours >= 20 ? 'By night' : x.hours + '-hour day stay') + '</button>';
+    }).join('');
+    var nn = Math.max(1, +PB.nights || 1);
     var stayAmt = p.stayTotal || 0;
     stay = '<div class="sec"><h3>Stay</h3>' +
       '<div class="two"><div><label class="label" for="pbd">Check-in date</label><input class="inp" id="pbd" data-pbs="date" type="date" value="' + esc(PB.date) + '"></div>' +
       '<div><label class="label" for="pbtm">Time-in</label><input class="inp" id="pbtm" data-pbs="time" type="time" step="1800" value="' + esc(PB.time) + '"></div></div>' +
-      '<div class="two"><div><label class="label" for="pbpk">Package</label><select class="inp" id="pbpk" data-pbpk="1">' + pkgOpts + '</select></div>' +
-      (r.hours >= 20 ? '<div><label class="label" for="pbnt">Nights</label><input class="inp" id="pbnt" data-pbs="nights" type="number" inputmode="numeric" min="1" max="30" value="' + esc(PB.nights) + '"></div>' : '<div></div>') + '</div>' +
+      '<span class="label">Type of stay</span><div class="seg">' + pkgBtns + '</div>' +
+      (r.hours >= 20 ? '<label class="label" for="pbnt">Nights</label><input class="inp" id="pbnt" data-pbs="nights" type="number" inputmode="numeric" min="1" max="30" value="' + esc(PB.nights) + '">' +
+        '<p class="hint" id="pbnhint"' + (nn > 1 ? ' hidden' : '') + '>1 night = ' + r.hours + ' hours.</p>' : '') +
       '<div class="two"><div><label class="label" for="pbex">Extra hours</label><input class="inp" id="pbex" data-pbs="extra" type="number" inputmode="numeric" min="0" max="12" value="' + esc(PB.extra) + '"></div>' +
       '<div><label class="label" for="pbem">Email (optional)</label><input class="inp" id="pbem" data-pbs="email" type="email" value="' + esc(PB.email) + '"></div></div>' +
       '<div id="pbprice" style="margin-top:12px;font-size:14px;line-height:1.7">' + pbPriceHtml() + '</div></div>' +
@@ -252,6 +258,7 @@ function pbPriceHtml() {
 }
 function pbRefresh() {   // after typing: update the price and the save button without redrawing
   var pr = document.getElementById('pbprice'); if (pr) pr.innerHTML = pbPriceHtml();
+  var nh = document.getElementById('pbnhint'); if (nh) nh.hidden = (+PB.nights || 1) > 1;
   var miss = pbMissing(), m = document.getElementById('pbmiss'), btn = document.querySelector('[data-pbsave]');
   if (m) { m.textContent = miss; m.hidden = !miss; }
   if (btn) btn.disabled = PB.busy || !!miss;
@@ -275,13 +282,12 @@ function pbChange(e) {
   if (d.pbf != null) { pbReadId(+d.pbf, e.target.files && e.target.files[0]); return; }
   if (d.pbt != null) { PB.guests[+d.pbt].idType = e.target.value; pbRender(); return; }
   if (d.pbu != null) { if (d.pbu === 'b') PB.babyUnit = e.target.value; else PB.guests[+d.pbu.slice(1)].unit = e.target.value; pbRefresh(); return; }
-  if (d.pbpk) { PB.pkg = e.target.value; pbRender(); return; }
   if (d.pbbaby) { PB.baby = e.target.checked; pbRender(); return; }
   if (d.pbdep) { PB.depBack = e.target.checked; return; }
   if (d.pbs) { PB[d.pbs] = e.target.value; pbRefresh(); }
 }
 function pbClick(e) {
-  var el = e.target.closest('[data-pbc],[data-pbk],[data-pbdel],[data-pbaddg],[data-pbm],[data-pbview],[data-pbsave]');
+  var el = e.target.closest('[data-pbc],[data-pbk],[data-pbdel],[data-pbaddg],[data-pbm],[data-pbpk],[data-pbview],[data-pbsave]');
   if (!el || el.disabled || !PB) return;
   var d = el.dataset;
   if (d.pbc) { if (!PB.busy) pbClose(); return; }
@@ -289,6 +295,7 @@ function pbClick(e) {
   if (d.pbdel != null) { PB.guests.splice(+d.pbdel, 1); pbRender(); return; }
   if (d.pbaddg) { PB.guests.push(pbBlank()); pbRender(); return; }
   if (d.pbm) { PB.method = d.pbm; pbRender(); return; }
+  if (d.pbpk) { PB.pkg = d.pbpk; pbRender(); return; }
   if (d.pbview) { viewId(PB.ref, +d.pbview); var vs = document.querySelectorAll('.viewer'); if (vs.length) vs[vs.length - 1].style.zIndex = '70'; return; }
   if (d.pbsave) pbSave();
 }
