@@ -148,8 +148,11 @@ function pbPrice() {
     outMs = minOut + Math.ceil((outMs - minOut) / HOUR - 1e-9) * HOUR;
   }
   var total = Math.round((outMs - inMs) / HOUR), exceed = Math.max(0, total - covered);
+  // nights come with their exceeding hours (time-out = same time as time-in); anything later is extra hours
+  var usual = PB.kind === 'nights' ? inMs + 24 * n * HOUR : minOut;
+  var extraH = Math.max(0, Math.round((outMs - usual) / HOUR)), nightH = exceed - extraH;
   return { nightly: nightly, n: n, units: units, hours: r.hours, pax: pax > 2 ? 4 : 2, base: base, stay: stay, disc: disc, covered: covered, total: total,
-    exceed: exceed, outMs: outMs, rate: st.extra_hour_rate, stayTotal: stay - disc + exceed * st.extra_hour_rate, deposit: st.deposit, endMs: outMs };
+    exceed: exceed, nightH: nightH, extraH: extraH, minOut: minOut, usual: usual, outMs: outMs, rate: st.extra_hour_rate, stayTotal: stay - disc + exceed * st.extra_hour_rate, deposit: st.deposit, endMs: outMs };
 }
 
 // ---------- ID photos ----------
@@ -245,6 +248,11 @@ function pbRender() {
       (PB.kind === 'nights' ? '<label class="label" for="pbnt">Nights</label><input class="inp" id="pbnt" data-pbs="nights" type="number" inputmode="numeric" min="1" max="30" value="' + esc(PB.nights) + '">' +
         '<p class="hint">Each night is the ' + r.hours + '-hour rate and covers ' + r.hours + ' hrs. Any hours after that until time-out are exceeding hours. ' +
         'Example: 22 hours extended by another 22 hours = 2 nights with time-out ' + r.hours * 2 + ' hrs after time-in (0 exceeding).</p>' : '') +
+      '<span class="label">Extra hours · ' + peso(S.data.settings.extra_hour_rate) + ' each</span>' +
+      '<div style="display:flex;align-items:center;gap:12px"><button type="button" class="round" data-pbex="-1" aria-label="One hour less"' + ((p.outMs || 0) > (p.usual || 0) ? '' : ' disabled') + '>−</button>' +
+      '<output id="pbexn" style="min-width:64px;text-align:center;font-size:16px">' + (p.extraH || 0) + ' hr' + (p.extraH === 1 ? '' : 's') + '</output>' +
+      '<button type="button" class="round" data-pbex="1" aria-label="One hour more"' + ((p.extraH || 0) < 12 ? '' : ' disabled') + '>+</button>' +
+      '<span class="hint" style="margin:0">Moves the time-out</span></div>' +
       '<div class="two"><div><label class="label" for="pbout">Time-out</label><input class="inp" id="pbout" data-pbs="outTime" type="time" step="1800" value="' + esc(PB.outTime || (PB.kind === 'nights' ? PB.time : '')) + '"></div>' +
       '<div><label class="label" for="pbem">Email (optional)</label><input class="inp" id="pbem" data-pbs="email" type="email" value="' + esc(PB.email) + '"></div></div>' +
       '<div id="pbprice" style="margin-top:12px;font-size:14px;line-height:1.7">' + pbPriceHtml() + '</div></div>' +
@@ -271,7 +279,8 @@ function pbPriceHtml() {
   var h = row((PB.kind === 'nights' ? p.n + (p.n > 1 ? ' nights' : ' night') + ' × ' + peso(p.base) + ' <small style="color:var(--muted)">(' + p.hours + ' hrs each, ' + p.pax + ' pax)</small>'
     : p.hours + ' hours <small style="color:var(--muted)">(' + p.pax + ' pax)</small>'), peso(p.stay));
   if (p.disc) h += row('Promo', '−' + peso(p.disc), 'color:var(--ok)');
-  if (p.exceed) h += row('Exceeding hours (' + p.exceed + ' × ' + peso(p.rate) + ')', peso(p.exceed * p.rate));
+  if (p.nightH) h += row((PB.kind === 'nights' ? 'Overnight exceeding hours' : 'Exceeding hours') + ' (' + p.nightH + ' × ' + peso(p.rate) + ')', peso(p.nightH * p.rate));
+  if (p.extraH) h += row('Extra hours (' + p.extraH + ' × ' + peso(p.rate) + ')', peso(p.extraH * p.rate));
   if (PB.date) h += '<p class="hint" style="margin:2px 0 6px">Time-out ' + when(new Date(p.outMs + PH).toISOString().slice(0, 16)) + ' · ' + p.total + ' hrs in total − ' + p.covered + ' hrs ' +
     (PB.kind === 'nights' ? 'for the ' + (p.n > 1 ? p.n + ' nights' : 'night') : 'package') + ' = ' + p.exceed + ' exceeding hr' + (p.exceed === 1 ? '' : 's') + '</p>';
   h += row('Stay total', peso(p.stayTotal), 'border-top:1px solid var(--line);padding-top:4px');
@@ -281,6 +290,8 @@ function pbPriceHtml() {
 }
 function pbRefresh() {   // after typing: update the price and the save button without redrawing
   var pr = document.getElementById('pbprice'); if (pr) pr.innerHTML = pbPriceHtml();
+  var px = pbPrice(), ex = document.getElementById('pbexn');
+  if (ex && px) { ex.textContent = px.extraH + ' hr' + (px.extraH === 1 ? '' : 's'); var mb = document.querySelector('[data-pbex="-1"]'); if (mb) mb.disabled = px.outMs <= px.usual; }
   var miss = pbMissing(), m = document.getElementById('pbmiss'), btn = document.querySelector('[data-pbsave]');
   if (m) { m.textContent = miss; m.hidden = !miss; }
   if (btn) btn.disabled = PB.busy || !!miss;
@@ -309,7 +320,7 @@ function pbChange(e) {
   if (d.pbs) { PB[d.pbs] = e.target.value; pbRefresh(); }
 }
 function pbClick(e) {
-  var el = e.target.closest('[data-pbc],[data-pbk],[data-pbdel],[data-pbaddg],[data-pbm],[data-pbkind],[data-pbview],[data-pbsave]');
+  var el = e.target.closest('[data-pbc],[data-pbk],[data-pbdel],[data-pbaddg],[data-pbm],[data-pbkind],[data-pbex],[data-pbview],[data-pbsave]');
   if (!el || el.disabled || !PB) return;
   var d = el.dataset;
   if (d.pbc) { if (!PB.busy) pbClose(); return; }
@@ -317,6 +328,13 @@ function pbClick(e) {
   if (d.pbdel != null) { PB.guests.splice(+d.pbdel, 1); pbRender(); return; }
   if (d.pbaddg) { PB.guests.push(pbBlank()); pbRender(); return; }
   if (d.pbm) { PB.method = d.pbm; pbRender(); return; }
+  if (d.pbex) {   // extra hours: move the time-out one hour, never before the usual time-out
+    var px = pbPrice(); if (!px || !PB.date) return;
+    var t = Math.max(px.usual, px.outMs + (+d.pbex) * HOUR);
+    if (t - px.usual > 12 * HOUR) return;
+    PB.outTime = t === px.usual && PB.kind !== 'nights' ? '' : new Date(t + PH).toISOString().slice(11, 16);
+    pbRender(); return;
+  }
   if (d.pbkind) {
     var nr = pbRates().filter(function (x) { return x.hours >= 20; })[0], dr = pbRates().filter(function (x) { return x.hours < 20; })[0];
     if (PB.kind !== d.pbkind) PB.outTime = '';
