@@ -46,7 +46,11 @@ function pbRate(pkg) { return pbRates().filter(function (r) { return r.package =
   detail = function () {
     var h = plainDetail(), b = S.data.bookings.filter(function (x) { return x.ref === S.open; })[0];
     if (b && isPastRef(b)) h = h.split('>ID deleted<').join('>No ID yet<');
-    if (b && b.nights) h = h.replace(plural(b.nights, 'night') + ' · ' + esc(b.package) + ' · ', plural(b.nights, 'night') + ' (' + (((pbRate(b.package) || {}).hours) || 22) + ' hrs each) · ');
+    if (b && b.nights) {   // a 1-night stay of under 24 hrs is the "22 hours" package; longer ones are counted in nights
+      var lbl = b.nights === 1 && hours(b) < 24 ? (((pbRate(b.package) || {}).hours) || 22) + ' hours' : plural(b.nights, 'night');
+      h = h.replace(plural(b.nights, 'night') + ' · ' + esc(b.package) + ' · ', lbl + ' · ');
+      h = h.replace('<span>' + plural(b.nights, 'night') + ' · ' + (b.pax <= 2 ? '2' : '4') + ' pax rate', '<span>' + lbl + ' · ' + (b.pax <= 2 ? '2' : '4') + ' pax rate');
+    }
     h = h.replace('<span>Extra &amp; stay-over hours (', '<span>Exceeding hours (');
     return h;
   };
@@ -69,7 +73,7 @@ function pbBaby(info) {
 function pbOpen(mode, ref) {
   var night = pbRates().filter(function (r) { return r.hours >= 20; })[0] || pbRates()[0] || {};
   PB = { mode: mode, ref: ref || '', busy: false, err: '', guests: [pbBlank()], baby: false, babyName: '', babyAge: '', babyUnit: 'months',
-    email: '', date: '', time: '14:00', pkg: night.package || '', nights: 1, outTime: '', amount: '', method: 'GCash', depBack: true, max: 4 };
+    email: '', date: '', time: '14:00', pkg: night.package || '', kind: 'h22', nights: 1, outTime: '', amount: '', method: 'GCash', depBack: true, max: 4 };
   var b = ref && S.data.bookings.filter(function (x) { return x.ref === ref; })[0];
   if (b) {
     PB.guests = b.guests.length ? b.guests.map(pbGuestFrom) : [pbBlank()];
@@ -79,6 +83,7 @@ function pbOpen(mode, ref) {
       var r = pbRate(b.package) || {};
       PB.email = b.guest_email || ''; PB.date = b.check_in.slice(0, 10); PB.time = b.check_in.slice(11, 16);
       PB.pkg = b.package; PB.nights = b.nights || 1;
+      PB.kind = !(r.hours >= 20) ? 'day' : b.nights > 1 || hours(b) >= 24 ? 'nights' : 'h22';
       PB.outTime = b.check_out.slice(11, 16);
       PB.amount = String(Math.max(0, b.paid_total - b.deposit));
       PB.method = (b.payments[0] && b.payments[0].method) || 'GCash';
@@ -125,7 +130,7 @@ function pbMissing() {
 // Exceeding hours = time from check-in to check-out, minus the hours the nights cover (22 per night).
 function pbPrice() {
   var st = S.data.settings, r = pbRate(PB.pkg); if (!r) return null;
-  var nightly = r.hours >= 20, n = nightly ? Math.max(1, +PB.nights || 1) : 0, pax = PB.guests.length, base = pax > 2 ? r.rate_3_4_pax : r.rate_1_2_pax;
+  var nightly = r.hours >= 20, n = nightly ? (PB.kind === 'nights' ? Math.max(1, +PB.nights || 1) : 1) : 0, pax = PB.guests.length, base = pax > 2 ? r.rate_3_4_pax : r.rate_1_2_pax;
   var units = Math.max(1, n), stay = 0, disc = 0;
   for (var i = 0; i < units; i++) {
     var day = PB.date ? new Date(ms(PB.date + 'T00:00') + PH + i * 24 * HOUR).toISOString().slice(0, 10) : '';
@@ -135,10 +140,10 @@ function pbPrice() {
   var covered = units * r.hours;                          // hours paid by the nights (22 each) or the day stay
   var inMs = PB.date ? ms(PB.date + 'T' + (PB.time || '00:00')) : 0;
   var minOut = inMs + ((nightly ? 24 * (n - 1) : 0) + r.hours) * HOUR;   // earliest time-out for these nights
-  var outMs = minOut, late = 0;
-  if (PB.date && PB.outTime) {   // the first time-out at that clock time, on or after the earliest one
+  var outMs = minOut, late = 0, outClock = PB.outTime || (PB.kind === 'nights' ? PB.time : '');
+  if (PB.date && outClock) {   // the first time-out at that clock time, on or after the earliest one
     var d0 = new Date(minOut + PH).toISOString().slice(0, 10);
-    outMs = ms(d0 + 'T' + PB.outTime);
+    outMs = ms(d0 + 'T' + outClock);
     if (outMs < minOut) outMs += 24 * HOUR;
     late = Math.ceil((outMs - minOut) / HOUR - 1e-9);
     outMs = minOut + late * HOUR;
@@ -231,17 +236,18 @@ function pbRender() {
   var stay = '';
   if (PB.mode !== 'guests') {
     var p = pbPrice() || {}, r = pbRate(PB.pkg) || {};
-    // overnight = nights × the 22-hour rate; the time-out decides the exceeding hours
-    var pkgBtns = pbRates().map(function (x) {
-      return '<button type="button" data-pbpk="' + esc(x.package) + '" aria-pressed="' + (PB.pkg === x.package) + '">' + (x.hours >= 20 ? 'Overnight (' + x.hours + ' hrs)' : x.hours + '-hour day stay') + '</button>';
-    }).join('');
+    // 10 hours · 22 hours · nights (each night = the 22-hour rate; the hours until time-out are exceeding hours)
+    var kinds = pbRates().map(function (x) { return [x.hours >= 20 ? 'h22' : 'day', x.hours + ' hours']; });
+    if (pbRates().some(function (x) { return x.hours >= 20; })) kinds.push(['nights', 'Nights']);
+    var pkgBtns = kinds.map(function (k) { return '<button type="button" data-pbkind="' + k[0] + '" aria-pressed="' + (PB.kind === k[0]) + '">' + k[1] + '</button>'; }).join('');
     var stayAmt = p.stayTotal || 0;
     stay = '<div class="sec"><h3>Stay</h3>' +
       '<div class="two"><div><label class="label" for="pbd">Check-in date</label><input class="inp" id="pbd" data-pbs="date" type="date" value="' + esc(PB.date) + '"></div>' +
       '<div><label class="label" for="pbtm">Time-in</label><input class="inp" id="pbtm" data-pbs="time" type="time" step="1800" value="' + esc(PB.time) + '"></div></div>' +
       '<span class="label">Type of stay</span><div class="seg">' + pkgBtns + '</div>' +
-      (r.hours >= 20 ? '<label class="label" for="pbnt">Nights</label><input class="inp" id="pbnt" data-pbs="nights" type="number" inputmode="numeric" min="1" max="30" value="' + esc(PB.nights) + '">' : '') +
-      '<div class="two"><div><label class="label" for="pbout">Time-out</label><input class="inp" id="pbout" data-pbs="outTime" type="time" step="1800" value="' + esc(PB.outTime) + '"></div>' +
+      (PB.kind === 'nights' ? '<label class="label" for="pbnt">Nights</label><input class="inp" id="pbnt" data-pbs="nights" type="number" inputmode="numeric" min="1" max="30" value="' + esc(PB.nights) + '">' +
+        '<p class="hint">Each night is the ' + r.hours + '-hour rate. The hours until time-out are added as exceeding hours. Time-out is the same time as time-in unless you change it.</p>' : '') +
+      '<div class="two"><div><label class="label" for="pbout">Time-out</label><input class="inp" id="pbout" data-pbs="outTime" type="time" step="1800" value="' + esc(PB.outTime || (PB.kind === 'nights' ? PB.time : '')) + '"></div>' +
       '<div><label class="label" for="pbem">Email (optional)</label><input class="inp" id="pbem" data-pbs="email" type="email" value="' + esc(PB.email) + '"></div></div>' +
       '<div id="pbprice" style="margin-top:12px;font-size:14px;line-height:1.7">' + pbPriceHtml() + '</div></div>' +
       '<div class="sec"><h3>Payment</h3>' +
@@ -264,12 +270,12 @@ function pbPriceHtml() {
   var p = pbPrice(); if (!p) return '';
   var amt = PB.amount === '' ? p.stayTotal : +PB.amount;
   var row = function (a, b, style) { return '<div class="dl"' + (style ? ' style="' + style + '"' : '') + '><span>' + a + '</span><b>' + b + '</b></div>'; };
-  var h = row((p.nightly ? p.n + (p.n > 1 ? ' nights' : ' night') + ' × ' + peso(p.base) + ' <small style="color:var(--muted)">(' + p.hours + ' hrs each, ' + p.pax + ' pax)</small>'
+  var h = row((PB.kind === 'nights' ? p.n + (p.n > 1 ? ' nights' : ' night') + ' × ' + peso(p.base) + ' <small style="color:var(--muted)">(' + p.hours + ' hrs each, ' + p.pax + ' pax)</small>'
     : p.hours + ' hours <small style="color:var(--muted)">(' + p.pax + ' pax)</small>'), peso(p.stay));
   if (p.disc) h += row('Promo', '−' + peso(p.disc), 'color:var(--ok)');
   if (p.exceed) h += row('Exceeding hours (' + p.exceed + ' × ' + peso(p.rate) + ')', peso(p.exceed * p.rate));
   if (PB.date) h += '<p class="hint" style="margin:2px 0 6px">Time-out ' + when(new Date(p.outMs + PH).toISOString().slice(0, 16)) + ' · ' + p.total + ' hrs in total − ' + p.covered + ' hrs ' +
-    (p.nightly ? 'for the ' + (p.n > 1 ? p.n + ' nights' : 'night') : 'package') + ' = ' + p.exceed + ' exceeding hr' + (p.exceed === 1 ? '' : 's') + '</p>';
+    (PB.kind === 'nights' ? 'for the ' + (p.n > 1 ? p.n + ' nights' : 'night') : 'package') + ' = ' + p.exceed + ' exceeding hr' + (p.exceed === 1 ? '' : 's') + '</p>';
   h += row('Stay total', peso(p.stayTotal), 'border-top:1px solid var(--line);padding-top:4px');
   h += row('Security deposit (refundable)', peso(p.deposit));
   h += row('Paid for the stay', '<span style="color:' + (amt >= p.stayTotal ? 'var(--ok)' : 'var(--bad)') + '">' + peso(amt) + (amt < p.stayTotal ? ' · ' + peso(p.stayTotal - amt) + ' unpaid' : '') + '</span>');
@@ -305,7 +311,7 @@ function pbChange(e) {
   if (d.pbs) { PB[d.pbs] = e.target.value; pbRefresh(); }
 }
 function pbClick(e) {
-  var el = e.target.closest('[data-pbc],[data-pbk],[data-pbdel],[data-pbaddg],[data-pbm],[data-pbpk],[data-pbview],[data-pbsave]');
+  var el = e.target.closest('[data-pbc],[data-pbk],[data-pbdel],[data-pbaddg],[data-pbm],[data-pbkind],[data-pbview],[data-pbsave]');
   if (!el || el.disabled || !PB) return;
   var d = el.dataset;
   if (d.pbc) { if (!PB.busy) pbClose(); return; }
@@ -313,7 +319,13 @@ function pbClick(e) {
   if (d.pbdel != null) { PB.guests.splice(+d.pbdel, 1); pbRender(); return; }
   if (d.pbaddg) { PB.guests.push(pbBlank()); pbRender(); return; }
   if (d.pbm) { PB.method = d.pbm; pbRender(); return; }
-  if (d.pbpk) { PB.pkg = d.pbpk; pbRender(); return; }
+  if (d.pbkind) {
+    var nr = pbRates().filter(function (x) { return x.hours >= 20; })[0], dr = pbRates().filter(function (x) { return x.hours < 20; })[0];
+    if (PB.kind !== d.pbkind) PB.outTime = '';
+    PB.kind = d.pbkind; PB.pkg = ((d.pbkind === 'day' ? dr : nr) || {}).package || PB.pkg;
+    if (d.pbkind === 'nights' && (+PB.nights || 1) < 2) PB.nights = 2;
+    pbRender(); return;
+  }
   if (d.pbview) { viewId(PB.ref, +d.pbview); var vs = document.querySelectorAll('.viewer'); if (vs.length) vs[vs.length - 1].style.zIndex = '70'; return; }
   if (d.pbsave) pbSave();
 }
@@ -334,7 +346,7 @@ function pbSave() {
     body.action = PB.mode === 'add' ? 'staffAddPast2' : 'staffEditPast';
     if (PB.mode === 'edit') body.ref = PB.ref;
     body.guest_email = PB.email.trim(); body.check_in = PB.date + 'T' + (PB.time || '14:00'); body.package = PB.pkg;
-    body.nights = +PB.nights || 1; body.extra_hours = p.extra;
+    body.nights = PB.kind === 'nights' ? p.n : 1; body.extra_hours = p.extra;
     body.amount_paid = PB.amount === '' ? p.stayTotal : +PB.amount; body.method = PB.method; body.deposit_returned = PB.depBack;
   }
   PB.busy = true; PB.err = ''; pbRender();
