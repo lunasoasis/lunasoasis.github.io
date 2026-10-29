@@ -133,7 +133,7 @@ function adKind(a) {
     checklist: 'unit', upkeep: 'unit', gaf: 'gaf', staff: 'people', review: 'people' }[a.action] || 'other';
 }
 function adText(a) {
-  if (a.action === 'staffLogin') return 'signed in' + (a.details === 'kept signed in' ? ' (kept signed in)' : '');
+  if (a.action === 'staffLogin') return a.details === 'opened the portal' ? 'opened the portal (still signed in)' : 'signed in' + (a.details === 'kept signed in' ? ' (kept signed in)' : '');
   if (a.action === 'staffLogout') return 'signed out';
   if (a.action === 'gaf') return a.details === 'signature changed' ? 'changed the GAF signature' : 'sent the GAF for ' + a.ref + (a.details ? ' · ' + a.details.replace(/^sent /, '') : '');
   return typeof ovActivity === 'function' ? ovActivity(a) : a.action + ' ' + a.ref;
