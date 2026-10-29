@@ -9,6 +9,9 @@ var PB = null;   // the open box
 var PB_TYPES = ['PhilSys National ID', 'Driver\'s License', 'Passport', 'UMID', 'SSS ID', 'PRC ID', 'Postal ID', 'Voter\'s ID', 'PhilHealth ID',
   'Senior Citizen ID', 'PWD ID', 'School ID', 'Company ID', 'Other'];
 var PB_AGE = /^(\d{1,2}) (month|months|year|years) old$/;
+var PB_GRACE = 15;   // minutes past the hour that are free; more than that counts as a full extra hour
+function pbGraceHours(mins) { if (mins <= 0) return 0; var full = Math.floor(mins / 60); return full + (mins - full * 60 > PB_GRACE ? 1 : 0); }
+function pbDur(mins) { var h = Math.floor(mins / 60), m = mins - h * 60; return h + ' hrs' + (m ? ' ' + m + ' min' : ''); }
 
 function isPastRef(b) { return /^PAST-/.test(b.ref) || /^Past/.test(b.source || ''); }
 function pbRates() { return (S.data && S.data.settings.rates) || []; }
@@ -141,18 +144,18 @@ function pbPrice() {
   var inMs = PB.date ? ms(PB.date + 'T' + (PB.time || '00:00')) : 0;
   var minOut = inMs + covered * HOUR;                     // earliest time-out
   var outMs = minOut, outClock = PB.outTime || (PB.kind === 'nights' ? PB.time : '');
-  if (PB.date && outClock) {   // the first time-out at that clock time, on or after the earliest one
+  if (PB.date && outClock) {   // that clock time, within 12 hrs before / 12 hrs after the earliest time-out
     var d0 = new Date(minOut + PH).toISOString().slice(0, 10);
     outMs = ms(d0 + 'T' + outClock);
-    if (outMs < minOut) outMs += 24 * HOUR;
-    outMs = minOut + Math.ceil((outMs - minOut) / HOUR - 1e-9) * HOUR;
+    if (outMs < minOut - 12 * HOUR) outMs += 24 * HOUR;
+    if (outMs >= minOut + 12 * HOUR) outMs -= 24 * HOUR;
   }
-  var total = Math.round((outMs - inMs) / HOUR), exceed = Math.max(0, total - covered);
+  var mins = Math.round((outMs - inMs) / 60000), exceed = pbGraceHours(mins - covered * 60), total = covered + exceed;
   // nights come with their exceeding hours (time-out = same time as time-in); anything later is extra hours
   var usual = PB.kind === 'nights' ? inMs + 24 * n * HOUR : minOut;
-  var extraH = Math.max(0, Math.round((outMs - usual) / HOUR)), nightH = exceed - extraH;
+  var extraH = Math.max(0, exceed - Math.round((usual - minOut) / HOUR)), nightH = exceed - extraH;
   return { nightly: nightly, n: n, units: units, hours: r.hours, pax: pax > 2 ? 4 : 2, base: base, stay: stay, disc: disc, covered: covered, total: total,
-    exceed: exceed, nightH: nightH, extraH: extraH, minOut: minOut, usual: usual, outMs: outMs, rate: st.extra_hour_rate, stayTotal: stay - disc + exceed * st.extra_hour_rate, deposit: st.deposit, endMs: outMs };
+    exceed: exceed, nightH: nightH, extraH: extraH, minOut: minOut, usual: usual, outMs: outMs, mins: mins, billOut: minOut + exceed * HOUR, rate: st.extra_hour_rate, stayTotal: stay - disc + exceed * st.extra_hour_rate, deposit: st.deposit, endMs: outMs };
 }
 
 // ---------- ID photos ----------
@@ -249,11 +252,11 @@ function pbRender() {
         '<p class="hint">Each night is the ' + r.hours + '-hour rate and covers ' + r.hours + ' hrs. Any hours after that until time-out are exceeding hours. ' +
         'Example: 22 hours extended by another 22 hours = 2 nights with time-out ' + r.hours * 2 + ' hrs after time-in (0 exceeding).</p>' : '') +
       '<span class="label">Extra hours · ' + peso(S.data.settings.extra_hour_rate) + ' each</span>' +
-      '<div style="display:flex;align-items:center;gap:12px"><button type="button" class="round" data-pbex="-1" aria-label="One hour less"' + ((p.outMs || 0) > (p.usual || 0) ? '' : ' disabled') + '>−</button>' +
+      '<div style="display:flex;align-items:center;gap:12px"><button type="button" class="round" data-pbex="-1" aria-label="One hour less"' + ((p.extraH || 0) > 0 ? '' : ' disabled') + '>−</button>' +
       '<output id="pbexn" style="min-width:64px;text-align:center;font-size:16px">' + (p.extraH || 0) + ' hr' + (p.extraH === 1 ? '' : 's') + '</output>' +
       '<button type="button" class="round" data-pbex="1" aria-label="One hour more"' + ((p.extraH || 0) < 12 ? '' : ' disabled') + '>+</button>' +
       '<span class="hint" style="margin:0">Moves the time-out</span></div>' +
-      '<div class="two"><div><label class="label" for="pbout">Time-out</label><input class="inp" id="pbout" data-pbs="outTime" type="time" step="1800" value="' + esc(PB.outTime || (PB.kind === 'nights' ? PB.time : '')) + '"></div>' +
+      '<div class="two"><div><label class="label" for="pbout">Time-out</label><input class="inp" id="pbout" data-pbs="outTime" type="time" step="60" value="' + esc(PB.outTime || (PB.kind === 'nights' ? PB.time : '')) + '"></div>' +
       '<div><label class="label" for="pbem">Email (optional)</label><input class="inp" id="pbem" data-pbs="email" type="email" value="' + esc(PB.email) + '"></div></div>' +
       '<div id="pbprice" style="margin-top:12px;font-size:14px;line-height:1.7">' + pbPriceHtml() + '</div></div>' +
       '<div class="sec"><h3>Payment</h3>' +
@@ -281,8 +284,9 @@ function pbPriceHtml() {
   if (p.disc) h += row('Promo', '−' + peso(p.disc), 'color:var(--ok)');
   if (p.nightH) h += row((PB.kind === 'nights' ? 'Overnight exceeding hours' : 'Exceeding hours') + ' (' + p.nightH + ' × ' + peso(p.rate) + ')', peso(p.nightH * p.rate));
   if (p.extraH) h += row('Extra hours (' + p.extraH + ' × ' + peso(p.rate) + ')', peso(p.extraH * p.rate));
-  if (PB.date) h += '<p class="hint" style="margin:2px 0 6px">Time-out ' + when(new Date(p.outMs + PH).toISOString().slice(0, 16)) + ' · ' + p.total + ' hrs in total − ' + p.covered + ' hrs ' +
-    (PB.kind === 'nights' ? 'for the ' + (p.n > 1 ? p.n + ' nights' : 'night') : 'package') + ' = ' + p.exceed + ' exceeding hr' + (p.exceed === 1 ? '' : 's') + '</p>';
+  if (PB.date) h += '<p class="hint" style="margin:2px 0 6px">Time-out ' + when(new Date(p.outMs + PH).toISOString().slice(0, 16)) + ' · ' + pbDur(Math.max(0, p.mins)) + ' in total − ' + p.covered + ' hrs ' +
+    (PB.kind === 'nights' ? 'for the ' + (p.n > 1 ? p.n + ' nights' : 'night') : 'package') + ' = ' + p.exceed + ' hr' + (p.exceed === 1 ? '' : 's') + ' to pay' +
+    (p.mins % 60 ? ' (up to ' + PB_GRACE + ' min late is free; more counts as 1 hr)' : '') + '</p>';
   h += row('Stay total', peso(p.stayTotal), 'border-top:1px solid var(--line);padding-top:4px');
   h += row('Security deposit (refundable)', peso(p.deposit));
   h += row('Paid for the stay', '<span style="color:' + (amt >= p.stayTotal ? 'var(--ok)' : 'var(--bad)') + '">' + peso(amt) + (amt < p.stayTotal ? ' · ' + peso(p.stayTotal - amt) + ' unpaid' : '') + '</span>');
@@ -291,7 +295,7 @@ function pbPriceHtml() {
 function pbRefresh() {   // after typing: update the price and the save button without redrawing
   var pr = document.getElementById('pbprice'); if (pr) pr.innerHTML = pbPriceHtml();
   var px = pbPrice(), ex = document.getElementById('pbexn');
-  if (ex && px) { ex.textContent = px.extraH + ' hr' + (px.extraH === 1 ? '' : 's'); var mb = document.querySelector('[data-pbex="-1"]'); if (mb) mb.disabled = px.outMs <= px.usual; }
+  if (ex && px) { ex.textContent = px.extraH + ' hr' + (px.extraH === 1 ? '' : 's'); var mb = document.querySelector('[data-pbex="-1"]'); if (mb) mb.disabled = px.extraH <= 0; }
   var miss = pbMissing(), m = document.getElementById('pbmiss'), btn = document.querySelector('[data-pbsave]');
   if (m) { m.textContent = miss; m.hidden = !miss; }
   if (btn) btn.disabled = PB.busy || !!miss;
@@ -330,7 +334,7 @@ function pbClick(e) {
   if (d.pbm) { PB.method = d.pbm; pbRender(); return; }
   if (d.pbex) {   // extra hours: move the time-out one hour, never before the usual time-out
     var px = pbPrice(); if (!px || !PB.date) return;
-    var t = Math.max(px.usual, px.outMs + (+d.pbex) * HOUR);
+    var t = Math.max(px.usual, Math.max(px.billOut, px.usual) + (+d.pbex) * HOUR);
     if (t - px.usual > 12 * HOUR) return;
     PB.outTime = t === px.usual && PB.kind !== 'nights' ? '' : new Date(t + PH).toISOString().slice(11, 16);
     pbRender(); return;
